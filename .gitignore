@@ -1,0 +1,12 @@
+# Environment variables file
+.env
+
+# Distributable directory
+dist/
+
+# Test data and logs folders
+.data/
+.idea/dataSources.xml
+
+# Discord plugin settings
+.idea/discord.xml
