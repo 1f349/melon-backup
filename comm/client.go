@@ -10,14 +10,15 @@ import (
 )
 
 type Client struct {
-	conn       net.Conn
-	conf       conf.ConfigYAML
-	debug      bool
-	SenderData *SenderPacket
-	closeChan  chan struct{}
-	sendChan   chan *Packet
-	recvChan   chan *Packet
-	active     bool
+	conn           net.Conn
+	conf           conf.ConfigYAML
+	debug          bool
+	SenderData     *SenderPacket
+	closeChan      chan struct{}
+	sendChan       chan *Packet
+	recvChan       chan *Packet
+	active         bool
+	pureSocketMode bool
 }
 
 func NewClient(conf conf.ConfigYAML, debug bool) (*Client, error) {
@@ -39,6 +40,7 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 	var sd *SenderPacket
 	if cnf.GetMode() == conf.UnStore || cnf.GetMode() == conf.Backup {
 		pk := &SenderPacket{
+			Mode:                   cnf.GetMode().ToInt(),
 			Services:               &ServiceList{List: cnf.Services.List},
 			RequestReboot:          cnf.TriggerReboot,
 			RequestServiceStop:     cnf.Services.Stop,
@@ -56,6 +58,7 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 			_ = conn.Close()
 			return nil, err
 		}
+		sd = &SenderPacket{Mode: rv.Mode}
 	} else {
 		rv := &SenderPacket{}
 		_, err := rv.ReadFrom(conn)
@@ -63,7 +66,7 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 			_ = conn.Close()
 			return nil, err
 		}
-		pk := &IngesterPacket{}
+		pk := &IngesterPacket{Mode: cnf.GetMode().ToInt()}
 		_, err = pk.WriteTo(conn)
 		if err != nil {
 			_ = conn.Close()
@@ -71,31 +74,39 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 		}
 		sd = rv
 	}
-	cl := &Client{
-		conn:       conn,
-		conf:       cnf,
-		debug:      debug,
-		SenderData: sd,
-		closeChan:  make(chan struct{}),
-		sendChan:   make(chan *Packet),
-		recvChan:   make(chan *Packet),
-		active:     true,
+	return &Client{
+		conn:           conn,
+		conf:           cnf,
+		debug:          debug,
+		SenderData:     sd,
+		closeChan:      make(chan struct{}),
+		sendChan:       make(chan *Packet),
+		recvChan:       make(chan *Packet),
+		active:         false,
+		pureSocketMode: false,
+	}, nil
+}
+
+func (c *Client) ActivateWithPacketProcessing() {
+	if c.active {
+		return
 	}
+	c.active = true
 	go func() {
 		defer func() {
-			cl.active = false
+			c.active = false
 		}()
-		for cl.active {
+		for c.active {
 			select {
-			case <-cl.closeChan:
+			case <-c.closeChan:
 				return
-			case p := <-cl.sendChan:
-				_, err := p.WriteTo(cl.conn)
+			case p := <-c.sendChan:
+				_, err := p.WriteTo(c.conn)
 				if err != nil {
-					if cl.debug {
+					if c.debug {
 						log.Error(err)
 					}
-					cl.close(false)
+					c.close(false)
 					return
 				}
 			}
@@ -103,39 +114,50 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 	}()
 	go func() {
 		defer func() {
-			cl.active = false
-			close(cl.closeChan)
+			c.active = false
+			close(c.closeChan)
 		}()
-		for cl.active {
+		for c.active {
 			select {
-			case <-cl.closeChan:
+			case <-c.closeChan:
 				return
 			default:
 				p := &Packet{}
-				_, err := p.ReadFrom(cl.conn)
+				_, err := p.ReadFrom(c.conn)
 				if err != nil {
-					if cl.debug {
+					if c.debug {
 						log.Error(err)
 					}
-					cl.close(false)
+					c.close(false)
 					return
 				}
 				if p.Type == Finish {
-					cl.close(false)
+					c.close(false)
 					return
 				}
 				select {
-				case <-cl.closeChan:
+				case <-c.closeChan:
 					return
-				case cl.recvChan <- p:
+				case c.recvChan <- p:
 				}
 			}
 		}
 	}()
-	return cl, nil
+}
+
+func (c *Client) ActivateForPureConnection() net.Conn {
+	if c.active {
+		return nil
+	}
+	c.active = true
+	c.pureSocketMode = true
+	return c.conn
 }
 
 func (c *Client) SendPacket(p *Packet) {
+	if c.pureSocketMode {
+		return
+	}
 	if c.active {
 		if p == nil {
 			return
@@ -148,6 +170,9 @@ func (c *Client) SendPacket(p *Packet) {
 }
 
 func (c *Client) ReceivePacket() *Packet {
+	if c.pureSocketMode {
+		return nil
+	}
 	select {
 	case p := <-c.recvChan:
 		return p
@@ -160,15 +185,15 @@ func (c *Client) close(sendEnd bool) {
 	defer func() {
 		_ = c.conn.Close()
 	}()
-	if sendEnd {
+	if sendEnd && !c.pureSocketMode {
 		c.active = false
-		select {
-		case <-c.closeChan:
-		}
 		fp := &FinishPacket{}
 		_, err := fp.WriteTo(c.conn)
 		if err != nil && c.debug {
 			log.Error(err)
+		}
+		select {
+		case <-c.closeChan:
 		}
 	} else {
 		c.active = false

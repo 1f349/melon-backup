@@ -2,12 +2,14 @@ package comm
 
 import (
 	"errors"
+	"github.com/1f349/melon-backup/utils"
 	"io"
 )
 
 var Sender = PacketType(0)
 
 type SenderPacket struct {
+	Mode                   int
 	Services               *ServiceList
 	RequestReboot          bool
 	RequestServiceStop     bool
@@ -16,7 +18,12 @@ type SenderPacket struct {
 }
 
 func (p *SenderPacket) WriteTo(w io.Writer) (n int64, err error) {
-	bw, err := w.Write([]byte{byte(Sender)})
+	bw, err := utils.WriteCompressedInt(p.Mode, w)
+	if err != nil {
+		return int64(bw), err
+	}
+	cbw, err := w.Write([]byte{byte(Sender)})
+	bw += cbw
 	if err != nil {
 		return int64(bw), err
 	}
@@ -36,7 +43,7 @@ func (p *SenderPacket) WriteTo(w io.Writer) (n int64, err error) {
 	if p.RequestServiceStartNew {
 		fbuff[0] += 16
 	}
-	cbw, err := w.Write(fbuff)
+	cbw, err = w.Write(fbuff)
 	bw += cbw
 	if err != nil {
 		return int64(bw), err
@@ -52,8 +59,14 @@ func (p *SenderPacket) WriteTo(w io.Writer) (n int64, err error) {
 }
 
 func (p *SenderPacket) ReadFrom(r io.Reader) (n int64, err error) {
+	var br int
+	br, err, p.Mode = utils.ReadCompressedInt(r)
+	if err != nil {
+		return int64(br), err
+	}
 	tbuff := make([]byte, 1)
-	br, err := io.ReadFull(r, tbuff)
+	cbr, err := io.ReadFull(r, tbuff)
+	br += cbr
 	if err != nil {
 		return int64(br), err
 	}
@@ -61,7 +74,7 @@ func (p *SenderPacket) ReadFrom(r io.Reader) (n int64, err error) {
 		return int64(br), errors.New("invalid packet type")
 	}
 	fbuff := make([]byte, 1)
-	cbr, err := io.ReadFull(r, tbuff)
+	cbr, err = io.ReadFull(r, tbuff)
 	br += cbr
 	if err != nil {
 		return int64(br), err
