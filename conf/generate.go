@@ -47,7 +47,7 @@ func Generate(target io.Writer) {
 		RebootCommand: []string{"systemctl", "reboot"},
 		RSyncCommand:  []string{"rsync", "-vcrlHAXogtUSxz", "--mkpath", "--open-noatime", "--super", "--delete-during", "--force", "--numeric-ids", "--timeout=300", "--port=873", "--inplace", "--exclude", "/var/log/rsync.log", "--exclude", "/var/run/rsyncd.pid", "--exclude", "/var/run/rsync.lock", "--exclude", "/dev", "--stats", "/", "rbackupuser@127.0.0.1::files/"},
 		TarCommand:    []string{"tar", "-zcvpSf", "-", "--numeric-owner", "--acls", "--selinux", "--xattrs", "--one-file-system", "--exclude=/var/log/rsync.log", "--exclude=/var/run/rsyncd.pid", "--exclude=/var/run/rsync.lock", "--exclude=/dev", "/"},
-		UnTarCommand:  []string{"tar", "-zxvpSUf", "-", "--recursive-unlink", "", "--overwrite", "--overwrite-dir", "--numeric-owner", "--same-owner", "--acls", "--selinux", "--xattrs"},
+		UnTarCommand:  []string{"tar", "-zxvpSUf", "-", "--recursive-unlink", "--overwrite", "--overwrite-dir", "--numeric-owner", "--same-owner", "--acls", "--selinux", "--xattrs"},
 		TarBufferSize: 8192,
 	}
 	err := cEnc.Encode(&cnf)
