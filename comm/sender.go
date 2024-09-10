@@ -18,11 +18,11 @@ type SenderPacket struct {
 }
 
 func (p *SenderPacket) WriteTo(w io.Writer) (n int64, err error) {
-	bw, err := utils.WriteCompressedInt(p.Mode, w)
+	bw, err := w.Write([]byte{byte(Sender)})
 	if err != nil {
 		return int64(bw), err
 	}
-	cbw, err := w.Write([]byte{byte(Sender)})
+	cbw, err := utils.WriteCompressedInt(p.Mode, w)
 	bw += cbw
 	if err != nil {
 		return int64(bw), err
@@ -59,19 +59,19 @@ func (p *SenderPacket) WriteTo(w io.Writer) (n int64, err error) {
 }
 
 func (p *SenderPacket) ReadFrom(r io.Reader) (n int64, err error) {
-	var br int
-	br, err, p.Mode = utils.ReadCompressedInt(r)
-	if err != nil {
-		return int64(br), err
-	}
+	var cbr int
 	tbuff := make([]byte, 1)
-	cbr, err := io.ReadFull(r, tbuff)
-	br += cbr
+	br, err := io.ReadFull(r, tbuff)
 	if err != nil {
 		return int64(br), err
 	}
 	if tbuff[0] != byte(Sender) {
 		return int64(br), errors.New("invalid packet type")
+	}
+	cbr, err, p.Mode = utils.ReadCompressedInt(r)
+	br += cbr
+	if err != nil {
+		return int64(br), err
 	}
 	fbuff := make([]byte, 1)
 	cbr, err = io.ReadFull(r, tbuff)
