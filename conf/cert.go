@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"github.com/1f349/melon-backup/utils"
+	"github.com/charmbracelet/log"
 	"os"
 	"path"
 )
@@ -18,9 +19,13 @@ func loadCertificate(pth string, pool *x509.CertPool) {
 			crt, err := x509.ParseCertificate(ppb.Bytes)
 			if err == nil {
 				pool.AddCert(crt)
+			} else if Debug {
+				log.Error(err)
 			}
 			ppb, bts = pem.Decode(bts)
 		}
+	} else if Debug {
+		log.Error(err)
 	}
 }
 
@@ -35,6 +40,9 @@ func (c SecurityYAML) GetCert() *tls.Certificate {
 	cwd := utils.GetCWD()
 	cert, err := tls.LoadX509KeyPair(getAbsPath(cwd, c.PublicCert), getAbsPath(cwd, c.PrivateKey))
 	if err != nil {
+		if Debug {
+			log.Error(err)
+		}
 		return nil
 	}
 	return &cert
@@ -48,21 +56,28 @@ func (c SecurityYAML) GetCertPool() *x509.CertPool {
 	} else {
 		pool, err = x509.SystemCertPool()
 		if err != nil {
+			if Debug {
+				log.Error(err)
+			}
 			pool = x509.NewCertPool()
 		}
 	}
 	cwd := utils.GetCWD()
-	fCAPath := getAbsPath(cwd, c.CACert)
-	if st, err := os.Stat(fCAPath); err == nil && !st.IsDir() {
-		loadCertificate(fCAPath, pool)
+	if c.CACert != "" {
+		fCAPath := getAbsPath(cwd, c.CACert)
+		if st, err := os.Stat(fCAPath); err == nil && !st.IsDir() {
+			loadCertificate(fCAPath, pool)
+		}
 	}
-	dCAPath := getAbsPath(cwd, c.CACertDir)
-	if st, err := os.Stat(dCAPath); err == nil && st.IsDir() {
-		dfs, err := os.ReadDir(dCAPath)
-		if err == nil {
-			for _, df := range dfs {
-				if st, err := os.Stat(path.Join(dCAPath, df.Name())); err == nil && !st.IsDir() {
-					loadCertificate(path.Join(dCAPath, df.Name()), pool)
+	if c.CACertDir != "" {
+		dCAPath := getAbsPath(cwd, c.CACertDir)
+		if st, err := os.Stat(dCAPath); err == nil && st.IsDir() {
+			dfs, err := os.ReadDir(dCAPath)
+			if err == nil {
+				for _, df := range dfs {
+					if st, err := os.Stat(path.Join(dCAPath, df.Name())); err == nil && !st.IsDir() {
+						loadCertificate(path.Join(dCAPath, df.Name()), pool)
+					}
 				}
 			}
 		}

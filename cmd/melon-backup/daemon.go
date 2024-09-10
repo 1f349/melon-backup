@@ -38,6 +38,8 @@ func (d *daemonCmd) SetFlags(f *flag.FlagSet) {
 func (d *daemonCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	log.Info("Starting daemon ...")
 
+	conf.Debug = d.debug
+
 	if d.configPath == "" {
 		log.Error("Configuration file path is required")
 		return subcommands.ExitUsageError

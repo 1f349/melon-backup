@@ -2,6 +2,8 @@ package conf
 
 import "github.com/1f349/melon-backup/utils"
 
+var Debug bool
+
 type ConfigYAML struct {
 	Mode          string       `yaml:"mode"`
 	StoreFile     string       `yaml:"storeFile"`
