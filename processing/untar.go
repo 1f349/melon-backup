@@ -61,6 +61,7 @@ func NewUnTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *UnTar {
 		pipeIn:  stdin,
 		endChan: make(chan struct{}),
 	}
+	log.Info("UnTar Operation Started!")
 	go tar.readSTDErr()
 	go tar.writeSTDIn(debug)
 	go tar.readSTDOut(debug)
@@ -79,6 +80,7 @@ func (t *UnTar) WaitOnCompletion(debug bool) {
 		}
 		return
 	}
+	log.Info("UnTar Operation Completed!")
 }
 
 func (t *UnTar) sendKeepAlives() {

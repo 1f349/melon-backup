@@ -28,6 +28,7 @@ func NewUnFileTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *UnFile {
 		file:    flp,
 		endChan: make(chan struct{}),
 	}
+	log.Info("Started Reading from file: " + cnf.GetStoreFile())
 	go fl.readFileIn(debug)
 	go fl.eatAllKeepAlives()
 	return fl
@@ -35,6 +36,7 @@ func NewUnFileTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *UnFile {
 
 func (f *UnFile) WaitOnCompletion() {
 	<-f.endChan
+	log.Info("Finished Reading from file: " + f.cnf.GetStoreFile())
 }
 
 func (t *UnFile) eatAllKeepAlives() {

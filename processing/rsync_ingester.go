@@ -15,6 +15,7 @@ type RsyncIngester struct {
 
 func NewRsyncIngester(cnf conf.ConfigYAML, conn *comm.Client, debug bool) *RsyncIngester {
 	if cnf.Services.ManageRSync {
+		log.Info("Starting rsync service...")
 		cmd := utils.CreateCmd(append(cnf.Services.StartCommand, "rsync.service"))
 		err := cmd.Run()
 		if err != nil {
@@ -23,13 +24,17 @@ func NewRsyncIngester(cnf conf.ConfigYAML, conn *comm.Client, debug bool) *Rsync
 			}
 			return nil
 		}
+		log.Info("Started rsync service!")
 	}
 	return &RsyncIngester{cnf: cnf, lstnr: proxy.NewMultiplexer(conn, cnf, debug)}
 }
 
 func (r *RsyncIngester) Wait(debug bool) {
+	log.Info("Ingestion Started!")
 	<-r.lstnr.GetCloseWaiter()
+	log.Info("Ingestion Finished!")
 	if r.cnf.Services.ManageRSync {
+		log.Info("Stopping rsync service...")
 		cmd := utils.CreateCmd(append(r.cnf.Services.StopCommand, "rsync.service"))
 		err := cmd.Run()
 		if err != nil {
@@ -37,5 +42,6 @@ func (r *RsyncIngester) Wait(debug bool) {
 				log.Error(err)
 			}
 		}
+		log.Info("Stopped rsync service!")
 	}
 }

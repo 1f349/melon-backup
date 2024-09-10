@@ -49,6 +49,7 @@ func NewTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *Tar {
 		pipeOut: stdout,
 		pipeErr: stderr,
 	}
+	log.Info("Tar Operation Started!")
 	go tar.readSTDErr()
 	go tar.readSTDOut(debug)
 	go tar.eatAllKeepAlives()
@@ -63,6 +64,7 @@ func (t *Tar) WaitOnCompletion(debug bool) {
 		}
 		return
 	}
+	log.Info("Tar Operation Completed!")
 }
 
 func (t *Tar) eatAllKeepAlives() {

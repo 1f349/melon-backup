@@ -29,6 +29,7 @@ func NewFileTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *File {
 		file:    flp,
 		endChan: make(chan struct{}),
 	}
+	log.Info("Started Writing to file: " + cnf.GetStoreFile())
 	go fl.writeFileOut(debug)
 	if cnf.Net.KeepAliveTime > time.Millisecond {
 		go fl.sendKeepAlives()
@@ -38,6 +39,7 @@ func NewFileTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *File {
 
 func (f *File) WaitOnCompletion() {
 	<-f.endChan
+	log.Info("Finished Writing to file: " + f.cnf.GetStoreFile())
 }
 
 func (t *File) sendKeepAlives() {
