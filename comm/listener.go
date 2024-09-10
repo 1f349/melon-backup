@@ -6,6 +6,7 @@ import (
 	"github.com/1f349/melon-backup/conf"
 	"net"
 	"strconv"
+	"strings"
 )
 
 type Listener struct {
@@ -24,6 +25,14 @@ func NewListener(conf conf.ConfigYAML, debug bool) (*Listener, error) {
 		Certificates: []tls.Certificate{*crt},
 		ClientAuth:   tls.RequireAndVerifyClientCert,
 		ClientCAs:    conf.Security.GetCertPool(),
+		VerifyConnection: func(cs tls.ConnectionState) error {
+			for _, nom := range conf.Net.RemoteAllowedNames {
+				if err := cs.PeerCertificates[0].VerifyHostname(nom); err == nil {
+					return nil
+				}
+			}
+			return errors.New("Failed Remote Name Verification : " + strings.Join(cs.PeerCertificates[0].DNSNames, " "))
+		},
 	})
 	if err != nil {
 		return nil, err

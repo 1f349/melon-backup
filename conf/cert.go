@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"github.com/1f349/melon-backup/utils"
 	"os"
 	"path"
 )
@@ -23,14 +24,6 @@ func loadCertificate(pth string, pool *x509.CertPool) {
 	}
 }
 
-func getCWD() string {
-	cwd, err := os.Getwd()
-	if err == nil {
-		return cwd
-	}
-	return "/"
-}
-
 func getAbsPath(root string, pth string) string {
 	if path.IsAbs(pth) {
 		return pth
@@ -39,7 +32,7 @@ func getAbsPath(root string, pth string) string {
 }
 
 func (c SecurityYAML) GetCert() *tls.Certificate {
-	cwd := getCWD()
+	cwd := utils.GetCWD()
 	cert, err := tls.LoadX509KeyPair(getAbsPath(cwd, c.PublicCert), getAbsPath(cwd, c.PrivateKey))
 	if err != nil {
 		return nil
@@ -48,11 +41,17 @@ func (c SecurityYAML) GetCert() *tls.Certificate {
 }
 
 func (c SecurityYAML) GetCertPool() *x509.CertPool {
-	pool, err := x509.SystemCertPool()
-	if err != nil {
+	var pool *x509.CertPool
+	var err error
+	if c.NoSystemCerts {
 		pool = x509.NewCertPool()
+	} else {
+		pool, err = x509.SystemCertPool()
+		if err != nil {
+			pool = x509.NewCertPool()
+		}
 	}
-	cwd := getCWD()
+	cwd := utils.GetCWD()
 	fCAPath := getAbsPath(cwd, c.CACert)
 	if st, err := os.Stat(fCAPath); err == nil && !st.IsDir() {
 		loadCertificate(fCAPath, pool)

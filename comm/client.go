@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/log"
 	"net"
 	"strconv"
+	"time"
 )
 
 type Client struct {
@@ -29,6 +30,7 @@ func NewClient(conf conf.ConfigYAML, debug bool) (*Client, error) {
 	conn, err := tls.Dial("tcp", conf.Net.TargetAddr+":"+strconv.Itoa(int(conf.Net.TargetPort)), &tls.Config{
 		Certificates: []tls.Certificate{*crt},
 		RootCAs:      conf.Security.GetCertPool(),
+		ServerName:   conf.Net.GetTargetExpectedName(),
 	})
 	if err != nil {
 		return nil, err
@@ -93,8 +95,16 @@ func (c *Client) ActivateWithPacketProcessing() {
 	}
 	c.active = true
 	go func() {
+		var kAlive *time.Ticker = nil
+		if c.conf.Net.KeepAliveTime > time.Millisecond {
+			kAlive = time.NewTicker(c.conf.Net.KeepAliveTime)
+		}
+		pk := &Packet{Type: ConnectionKeepAlive}
 		defer func() {
 			c.active = false
+			if kAlive != nil {
+				kAlive.Stop()
+			}
 		}()
 		for c.active {
 			select {
@@ -109,6 +119,16 @@ func (c *Client) ActivateWithPacketProcessing() {
 					c.close(false)
 					return
 				}
+			case <-kAlive.C:
+				_, err := pk.WriteTo(c.conn)
+				if err != nil {
+					if c.debug {
+						log.Error(err)
+					}
+					c.close(false)
+					return
+				}
+				kAlive.Reset(c.conf.Net.KeepAliveTime)
 			}
 		}
 	}()
@@ -135,10 +155,12 @@ func (c *Client) ActivateWithPacketProcessing() {
 					c.close(false)
 					return
 				}
-				select {
-				case <-c.closeChan:
-					return
-				case c.recvChan <- p:
+				if p.Type != ConnectionKeepAlive {
+					select {
+					case <-c.closeChan:
+						return
+					case c.recvChan <- p:
+					}
 				}
 			}
 		}

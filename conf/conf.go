@@ -1,5 +1,7 @@
 package conf
 
+import "github.com/1f349/melon-backup/utils"
+
 type ConfigYAML struct {
 	Mode          string       `yaml:"mode"`
 	StoreFile     string       `yaml:"storeFile"`
@@ -11,6 +13,7 @@ type ConfigYAML struct {
 	RSyncCommand  []string     `yaml:"rsyncCommand"`
 	TarCommand    []string     `yaml:"tarCommand"`
 	UnTarCommand  []string     `yaml:"unTarCommand"`
+	TarBufferSize uint32       `yaml:"tarBufferSize"`
 }
 
 func (c ConfigYAML) GetMode() Mode {
@@ -26,4 +29,15 @@ func (c ConfigYAML) GetMode() Mode {
 	default:
 		return Unknown
 	}
+}
+
+func (c ConfigYAML) GetTarBufferSize() uint32 {
+	if c.TarBufferSize < 256 {
+		return 256
+	}
+	return c.TarBufferSize
+}
+
+func (c ConfigYAML) GetStoreFile() string {
+	return getAbsPath(utils.GetCWD(), c.StoreFile)
 }

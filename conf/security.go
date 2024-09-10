@@ -6,4 +6,5 @@ type SecurityYAML struct {
 	CACert        string `yaml:"caCert"`
 	CACertDir     string `yaml:"caCertDirectory"`
 	RSyncPassword string `yaml:"rsyncPassword"`
+	NoSystemCerts bool   `yaml:"noSystemCerts"`
 }

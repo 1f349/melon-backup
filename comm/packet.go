@@ -13,6 +13,7 @@ var ConnectionStarted = PacketType(2)
 var ConnectionReset = PacketType(3)
 var ConnectionClosed = PacketType(4)
 var ConnectionData = PacketType(5)
+var ConnectionKeepAlive = PacketType(254)
 
 type Packet struct {
 	Type         PacketType
@@ -28,7 +29,7 @@ func (p *Packet) WriteTo(w io.Writer) (n int64, err error) {
 	if p.Type == Ingester || p.Type == Sender {
 		return int64(bw), errors.New("invalid packet type")
 	}
-	if p.Type != ConnectionStartRequest && p.Type != ConnectionReset {
+	if p.Type != ConnectionStartRequest && p.Type != ConnectionReset && p.Type != ConnectionKeepAlive {
 		cbw, err := utils.WriteCompressedInt(p.ConnectionID, w)
 		bw += cbw
 		if err != nil {
@@ -60,7 +61,7 @@ func (p *Packet) ReadFrom(r io.Reader) (n int64, err error) {
 	if p.Type == Ingester || p.Type == Sender {
 		return int64(br), errors.New("invalid packet type")
 	}
-	if p.Type != ConnectionStartRequest && p.Type != ConnectionReset {
+	if p.Type != ConnectionStartRequest && p.Type != ConnectionReset && p.Type != ConnectionKeepAlive {
 		var cbr int
 		cbr, err, p.ConnectionID = utils.ReadCompressedInt(r)
 		br += cbr

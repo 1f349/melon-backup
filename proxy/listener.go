@@ -23,7 +23,7 @@ type Listener struct {
 }
 
 func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener, error) {
-	tl, err := net.Listen("tcp", cnf.Net.ProxyLocalAddr+":"+strconv.Itoa(int(cnf.Net.ProxyLocalPort)))
+	tl, err := net.Listen("tcp", cnf.Net.GetProxyLocalAddr()+":"+strconv.Itoa(int(cnf.Net.GetProxyLocalPort())))
 	if err != nil {
 		return nil, err
 	}
@@ -40,9 +40,7 @@ func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener,
 		closeLocker:       &sync.Mutex{},
 	}
 	go func() {
-		defer func() {
-			ls.active = false
-		}()
+		defer ls.Close()
 		for ls.active {
 			cc, err := ls.lstn.Accept()
 			if err != nil {
@@ -65,8 +63,12 @@ func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener,
 		}
 	}()
 	go func() {
+		defer ls.Close()
 		for ls.active {
 			p := conn.ReceivePacket()
+			if p == nil {
+				return
+			}
 			switch p.Type {
 			case comm.ConnectionReset:
 				select {
@@ -112,7 +114,7 @@ func (l *Listener) addClient(c net.Conn, id int) bool {
 		if _, exs := l.connections[id]; exs {
 			return true
 		}
-		nCl := newClient(l.conn, id, c, l.conf.Net.ProxyBufferSize, l.debug)
+		nCl := newClient(l.conn, id, c, l.conf.Net.GetProxyBufferSize(), l.debug)
 		l.connections[id] = nCl
 		go func() {
 			select {

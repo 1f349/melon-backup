@@ -42,7 +42,7 @@ func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML, debug bool) *Multipl
 				return
 			case x := <-mx.newConnectionChan:
 				if x {
-					cc, err := net.Dial("tcp", cnf.Net.ProxyLocalAddr+":"+strconv.Itoa(int(cnf.Net.ProxyLocalPort)))
+					cc, err := net.Dial("tcp", cnf.Net.GetProxyLocalAddr()+":"+strconv.Itoa(int(cnf.Net.GetProxyLocalPort())))
 					if err != nil {
 						if debug {
 							log.Error(err)
@@ -58,8 +58,12 @@ func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML, debug bool) *Multipl
 		}
 	}()
 	go func() {
+		defer mx.Close()
 		for mx.active {
 			p := conn.ReceivePacket()
+			if p == nil {
+				return
+			}
 			switch p.Type {
 			case comm.ConnectionStartRequest:
 				select {
@@ -96,7 +100,7 @@ func (m *Multiplexer) addClient(c net.Conn) bool {
 		if _, exs := m.connections[m.cID]; exs {
 			return true
 		}
-		nCl := newClient(m.conn, m.cID, c, m.conf.Net.ProxyBufferSize, m.debug)
+		nCl := newClient(m.conn, m.cID, c, m.conf.Net.GetProxyBufferSize(), m.debug)
 		m.connections[m.cID] = nCl
 		go func() {
 			select {
@@ -118,10 +122,15 @@ func (m *Multiplexer) Close() {
 	defer m.closeLocker.Unlock()
 	if m.active {
 		m.active = false
+		close(m.closeChan)
 		m.connectionsLocker.RLock()
 		defer m.connectionsLocker.RUnlock()
 		for _, conn := range m.connections {
 			conn.Close()
 		}
 	}
+}
+
+func (m *Multiplexer) GetCloseWaiter() <-chan struct{} {
+	return m.closeChan
 }
