@@ -65,7 +65,11 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 		if remoteMode == conf.Restore {
 			commClient.ActivateWithPacketProcessing()
 			tsk := NewRsyncSender(cnf, commClient, debug)
-			tsk.StartAndWait(debug)
+			if tsk != nil {
+				tsk.StartAndWait(debug)
+			} else {
+				return 7
+			}
 		} else if remoteMode == conf.Store {
 			conn := commClient.ActivateForPureConnection()
 			if conn == nil {
@@ -73,7 +77,11 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 				return 6
 			}
 			tsk := NewTarTask(conn, cnf, debug)
-			tsk.WaitOnCompletion(debug)
+			if tsk != nil {
+				tsk.WaitOnCompletion(debug)
+			} else {
+				return 7
+			}
 		} else {
 			log.Error("Remote Mode Incompatible!")
 			return 5
@@ -86,7 +94,11 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 		}
 		if remoteMode == conf.Store || remoteMode == conf.Restore {
 			tsk := NewUnFileTask(conn, cnf, debug)
-			tsk.WaitOnCompletion()
+			if tsk != nil {
+				tsk.WaitOnCompletion()
+			} else {
+				return 7
+			}
 		} else {
 			log.Error("Remote Mode Incompatible!")
 			return 5
@@ -95,7 +107,11 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 		if remoteMode == conf.Backup {
 			commClient.ActivateWithPacketProcessing()
 			tsk := NewRsyncIngester(cnf, commClient, debug)
-			tsk.Wait(debug)
+			if tsk != nil {
+				tsk.Wait(debug)
+			} else {
+				return 7
+			}
 		} else if remoteMode == conf.UnStore {
 			conn := commClient.ActivateForPureConnection()
 			if conn == nil {
@@ -103,7 +119,9 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 				return 6
 			}
 			tsk := NewUnTarTask(conn, cnf, debug)
-			tsk.WaitOnCompletion(debug)
+			if tsk != nil {
+				tsk.WaitOnCompletion(debug)
+			}
 		} else {
 			log.Error("Remote Mode Incompatible!")
 			return 5
@@ -116,7 +134,11 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 		}
 		if remoteMode == conf.UnStore || remoteMode == conf.Backup {
 			tsk := NewFileTask(conn, cnf, debug)
-			tsk.WaitOnCompletion()
+			if tsk != nil {
+				tsk.WaitOnCompletion()
+			} else {
+				return 7
+			}
 		} else {
 			log.Error("Remote Mode Incompatible!")
 			return 5
@@ -137,8 +159,10 @@ func getServiceSliceFromSenderData(p *comm.SenderPacket) []string {
 
 func startReboot(cnf conf.ConfigYAML, debug bool) {
 	cmd := utils.CreateCmd(cnf.RebootCommand)
-	err := cmd.Run()
-	if err != nil && debug {
-		log.Error(err)
+	if cmd != nil {
+		err := cmd.Run()
+		if err != nil && debug {
+			log.Error(err)
+		}
 	}
 }

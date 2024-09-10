@@ -7,7 +7,7 @@ import (
 )
 
 func StopServices(cnf conf.ConfigYAML, debug bool) []string {
-	if cnf.Services.Stop {
+	if cnf.Services.Stop && len(cnf.Services.StopCommand) > 0 {
 		toRet := make([]string, 0, len(cnf.Services.List))
 		log.Info("Service Stop Task Started...")
 		for _, n := range cnf.Services.List {

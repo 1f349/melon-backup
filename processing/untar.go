@@ -22,6 +22,10 @@ type UnTar struct {
 
 func NewUnTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *UnTar {
 	cmd := utils.CreateCmd(cnf.UnTarCommand)
+	if cmd == nil {
+		log.Error("No command!")
+		return nil
+	}
 	var err error
 	var stderr io.ReadCloser
 	if debug {

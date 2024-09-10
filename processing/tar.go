@@ -19,6 +19,10 @@ type Tar struct {
 
 func NewTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *Tar {
 	cmd := utils.CreateCmd(cnf.TarCommand)
+	if cmd == nil {
+		log.Error("No command!")
+		return nil
+	}
 	var err error
 	var stderr io.ReadCloser
 	if debug {

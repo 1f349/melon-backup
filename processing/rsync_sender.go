@@ -29,6 +29,14 @@ func NewRsyncSender(cnf conf.ConfigYAML, conn *comm.Client, debug bool) *RsyncSe
 
 func (s *RsyncSender) StartAndWait(debug bool) {
 	log.Info("RSync Started...")
+	defer func() {
+		s.lstnr.Close()
+		log.Info("Proxy Listener Closed!")
+	}()
+	if s.cmd == nil {
+		log.Error("No command!")
+		return
+	}
 	bts, err := s.cmd.CombinedOutput()
 	if err != nil {
 		if debug {
@@ -37,6 +45,4 @@ func (s *RsyncSender) StartAndWait(debug bool) {
 	}
 	log.Info(string(bts))
 	log.Info("RSync Finished!")
-	s.lstnr.Close()
-	log.Info("Proxy Listener Closed!")
 }

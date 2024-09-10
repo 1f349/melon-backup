@@ -10,6 +10,9 @@ func CreateCmd(cmdAArgs []string, cmdEnv ...string) *exec.Cmd {
 }
 
 func CreateCmdOnlyPassedEnv(cmdAArgs []string, cmdEnv ...string) *exec.Cmd {
+	if len(cmdEnv) == 0 {
+		return nil
+	}
 	cmd := exec.Command(cmdAArgs[0], cmdAArgs[1:]...)
 	cmd.Dir = GetCWD()
 	cmd.Env = cmdEnv

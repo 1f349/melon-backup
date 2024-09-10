@@ -17,14 +17,18 @@ func NewRsyncIngester(cnf conf.ConfigYAML, conn *comm.Client, debug bool) *Rsync
 	if cnf.Services.ManageRSync {
 		log.Info("Starting rsync service...")
 		cmd := utils.CreateCmd(append(cnf.Services.StartCommand, "rsync.service"))
-		err := cmd.Run()
-		if err != nil {
-			if debug {
-				log.Error(err)
+		if cmd != nil {
+			err := cmd.Run()
+			if err != nil {
+				if debug {
+					log.Error(err)
+				}
+				return nil
 			}
-			return nil
+			log.Info("Started rsync service!")
+		} else {
+			log.Error("No command!")
 		}
-		log.Info("Started rsync service!")
 	}
 	return &RsyncIngester{cnf: cnf, lstnr: proxy.NewMultiplexer(conn, cnf, debug)}
 }
@@ -36,12 +40,16 @@ func (r *RsyncIngester) Wait(debug bool) {
 	if r.cnf.Services.ManageRSync {
 		log.Info("Stopping rsync service...")
 		cmd := utils.CreateCmd(append(r.cnf.Services.StopCommand, "rsync.service"))
-		err := cmd.Run()
-		if err != nil {
-			if debug {
-				log.Error(err)
+		if cmd != nil {
+			err := cmd.Run()
+			if err != nil {
+				if debug {
+					log.Error(err)
+				}
 			}
+			log.Info("Stopped rsync service!")
+		} else {
+			log.Error("No command!")
 		}
-		log.Info("Stopped rsync service!")
 	}
 }
