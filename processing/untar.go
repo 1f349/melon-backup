@@ -109,6 +109,12 @@ func (t UnTar) writeSTDIn(debug bool) {
 		_ = t.pipeIn.Close()
 		_ = t.conn.Close()
 		close(t.endChan)
+		if t.cmd.ProcessState == nil {
+			err := t.cmd.Process.Kill()
+			if err != nil && debug {
+				log.Error(err)
+			}
+		}
 	}()
 	buff := make([]byte, t.cnf.GetTarBufferSize())
 	var br int

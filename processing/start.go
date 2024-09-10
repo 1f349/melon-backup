@@ -3,6 +3,7 @@ package processing
 import (
 	"github.com/1f349/melon-backup/comm"
 	"github.com/1f349/melon-backup/conf"
+	"github.com/1f349/melon-backup/utils"
 	"github.com/charmbracelet/log"
 	"strconv"
 )
@@ -56,6 +57,9 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 	sL := StopServices(cnf, debug)
 	defer StartServices(cnf, sL, getServiceSliceFromSenderData(commClient.SenderData), debug)
 	remoteMode := conf.ModeFromInt(commClient.SenderData.Mode)
+	if cnf.TriggerReboot && commClient.SenderData.RequestReboot {
+		defer startReboot(cnf, debug)
+	}
 	switch cnf.GetMode() {
 	case conf.Backup:
 		if remoteMode == conf.Restore {
@@ -129,4 +133,12 @@ func getServiceSliceFromSenderData(p *comm.SenderPacket) []string {
 		return nil
 	}
 	return p.Services.List
+}
+
+func startReboot(cnf conf.ConfigYAML, debug bool) {
+	cmd := utils.CreateCmd(cnf.RebootCommand)
+	err := cmd.Run()
+	if err != nil && debug {
+		log.Error(err)
+	}
 }
