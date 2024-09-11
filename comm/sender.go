@@ -6,6 +6,7 @@ import (
 	"github.com/1f349/melon-backup/utils"
 	"github.com/charmbracelet/log"
 	"io"
+	"strconv"
 )
 
 var Sender = PacketType(0)
@@ -86,6 +87,9 @@ func (p *SenderPacket) ReadFrom(r io.Reader) (n int64, err error) {
 		log.Error("pk_s_rf : a")
 	}
 	cbr, err, p.Mode = utils.ReadCompressedInt(r)
+	if conf.Debug {
+		log.Error("pk_s_rf : rci : " + strconv.Itoa(cbr))
+	}
 	br += cbr
 	if err != nil {
 		return int64(br), err
