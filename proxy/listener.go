@@ -104,18 +104,28 @@ func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener,
 				}
 			case comm.ConnectionData, comm.ConnectionClosed:
 				go func() {
-					ls.connectionsLocker.RLock()
-					defer ls.connectionsLocker.RUnlock()
-					select {
-					case <-ls.closeChan:
-					case <-ls.connections[p.ConnectionID].GetCloseChan():
-					case ls.connections[p.ConnectionID].GetPacketIntake() <- p:
+					if cc := ls.getClient(p.ConnectionID); cc != nil {
+						select {
+						case <-ls.closeChan:
+						case <-cc.GetCloseChan():
+						case cc.GetPacketIntake() <- p:
+						}
 					}
 				}()
 			}
 		}
 	}()
 	return ls, nil
+}
+
+func (l *Listener) getClient(id int) *Client {
+	l.connectionsLocker.RLock()
+	defer l.connectionsLocker.RUnlock()
+	if cc, ok := l.connections[id]; ok {
+		return cc
+	} else {
+		return nil
+	}
 }
 
 func (l *Listener) addClient(c net.Conn, id int) bool {

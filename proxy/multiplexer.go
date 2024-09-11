@@ -89,18 +89,28 @@ func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML, debug bool) *Multipl
 				}
 			case comm.ConnectionData, comm.ConnectionClosed:
 				go func() {
-					mx.connectionsLocker.RLock()
-					defer mx.connectionsLocker.RUnlock()
-					select {
-					case <-mx.closeChan:
-					case <-mx.connections[p.ConnectionID].GetCloseChan():
-					case mx.connections[p.ConnectionID].GetPacketIntake() <- p:
+					if cc := mx.getClient(mx.cID); cc != nil {
+						select {
+						case <-mx.closeChan:
+						case <-cc.GetCloseChan():
+						case cc.GetPacketIntake() <- p:
+						}
 					}
 				}()
 			}
 		}
 	}()
 	return mx
+}
+
+func (m *Multiplexer) getClient(id int) *Client {
+	m.connectionsLocker.RLock()
+	defer m.connectionsLocker.RUnlock()
+	if cc, ok := m.connections[id]; ok {
+		return cc
+	} else {
+		return nil
+	}
 }
 
 func (m *Multiplexer) addClient(c net.Conn) bool {
