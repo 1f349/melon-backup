@@ -2,8 +2,10 @@ package proxy
 
 import (
 	"github.com/1f349/melon-backup/comm"
+	"github.com/1f349/melon-backup/conf"
 	"github.com/charmbracelet/log"
 	"net"
+	"strconv"
 )
 
 type Client struct {
@@ -43,6 +45,9 @@ func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32, 
 					cl.close(true)
 					return
 				}
+				if debug {
+					log.Error("DBG : TCP (" + strconv.Itoa(br) + ")-> COM : " + strconv.Itoa(cl.conID))
+				}
 				p := &comm.Packet{
 					Type:         comm.ConnectionData,
 					ConnectionID: cl.conID,
@@ -65,6 +70,9 @@ func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32, 
 					cl.close(false)
 					return
 				}
+				if debug {
+					log.Error("DBG : TCP <-(" + strconv.Itoa(len(p.Data)) + ") COM : " + strconv.Itoa(cl.conID))
+				}
 				_, err := cl.connTCP.Write(p.Data)
 				if err != nil {
 					if debug {
@@ -81,6 +89,9 @@ func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32, 
 
 func (c *Client) close(sendEnd bool) {
 	defer func() {
+		if conf.Debug {
+			log.Error("DBG : CLOSED : " + strconv.Itoa(c.conID))
+		}
 		_ = c.connTCP.Close()
 		if sendEnd {
 			p := &comm.Packet{
