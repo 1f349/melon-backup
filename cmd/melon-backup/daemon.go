@@ -54,12 +54,10 @@ func (d *daemonCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}
 		}
 		return subcommands.ExitFailure
 	}
-	defer func() {
-		_ = openConf.Close()
-	}()
 
 	var cnf conf.ConfigYAML
 	err = yaml.NewDecoder(openConf).Decode(&cnf)
+	_ = openConf.Close()
 	if err != nil {
 		log.Error("Invalid config file: ", err)
 		return subcommands.ExitFailure

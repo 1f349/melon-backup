@@ -38,4 +38,4 @@ clean:
 deploy: build
 	sudo mkdir -p /etc/melon-backup
 	sudo cp "${BIN}" /usr/local/bin
-	sudo "/usr/local/bin/$(NBIN)" generate -config=/etc/melon-backup/example.conf
+	sudo "/usr/local/bin/$(NBIN)" generate -config=/etc/melon-backup/example.yml
