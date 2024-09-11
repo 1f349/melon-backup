@@ -23,14 +23,10 @@ func NewTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *Tar {
 		log.Error("No command!")
 		return nil
 	}
-	var err error
-	var stderr io.ReadCloser
-	if debug {
-		stderr, err = cmd.StderrPipe()
-		if err != nil {
-			log.Error(err)
-			return nil
-		}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		log.Error(err)
+		return nil
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -54,7 +50,7 @@ func NewTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *Tar {
 		pipeErr: stderr,
 	}
 	log.Info("Tar Operation Started!")
-	go tar.readSTDErr()
+	go tar.readSTDErr(debug)
 	go tar.readSTDOut(debug)
 	go tar.eatAllKeepAlives()
 	return tar
@@ -82,14 +78,16 @@ func (t *Tar) eatAllKeepAlives() {
 	}
 }
 
-func (t *Tar) readSTDErr() {
+func (t *Tar) readSTDErr(debug bool) {
 	defer func() {
 		bts, err := io.ReadAll(t.pipeErr)
 		if err != nil {
-			log.Error(err)
+			if debug {
+				log.Error(err)
+			}
 			return
 		}
-		log.Error(string(bts))
+		log.Info(string(bts))
 	}()
 	buff := make([]byte, t.cnf.GetTarBufferSize())
 	var br int
@@ -97,10 +95,12 @@ func (t *Tar) readSTDErr() {
 	for t.cmd.ProcessState == nil {
 		br, err = t.pipeErr.Read(buff)
 		if err != nil {
-			log.Error(err)
+			if debug {
+				log.Error(err)
+			}
 			return
 		} else {
-			log.Error(string(buff[:br]))
+			log.Info(string(buff[:br]))
 		}
 	}
 }

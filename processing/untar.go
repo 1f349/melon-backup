@@ -66,7 +66,9 @@ func NewUnTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *UnTar {
 		endChan: make(chan struct{}),
 	}
 	log.Info("UnTar Operation Started!")
-	go tar.readSTDErr()
+	if debug {
+		go tar.readSTDErr()
+	}
 	go tar.writeSTDIn(debug)
 	go tar.readSTDOut(debug)
 	if cnf.Net.KeepAliveTime > time.Millisecond {
