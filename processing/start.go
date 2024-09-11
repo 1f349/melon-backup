@@ -71,37 +71,39 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 		defer StartServices(cnf, sL, getServiceSliceFromSenderData(commClient.SenderData), debug)
 	}
 
-	var protBuffer *utils.BufferDummyClose
-	if cnf.ExcludeProtection.StdOutBuffStdInOn {
-		protBuffer = &utils.BufferDummyClose{}
-	}
-	if len(cnf.ExcludeProtection.ProtectCommand) > 0 {
-		if protBuffer == nil {
-			tsk := NewCommandTask(cnf, utils.CreateCmd(cnf.ExcludeProtection.ProtectCommand), "Protect")
-			if tsk != nil {
-				tsk.StartAndWait(debug)
-			}
-		} else {
-			tsk := NewCommandToConnTask(protBuffer, false, "Protect", utils.CreateCmd(cnf.ExcludeProtection.ProtectCommand), cnf, debug)
-			if tsk != nil {
-				tsk.WaitOnCompletion(debug)
-			}
+	if cnf.GetMode() == conf.Restore {
+		var protBuffer *utils.BufferDummyClose
+		if cnf.ExcludeProtection.StdOutBuffStdInOn {
+			protBuffer = &utils.BufferDummyClose{}
 		}
-		if len(cnf.ExcludeProtection.UnProtectCommand) > 0 {
+		if len(cnf.ExcludeProtection.ProtectCommand) > 0 {
 			if protBuffer == nil {
-				defer func() {
-					tsk := NewCommandTask(cnf, utils.CreateCmd(cnf.ExcludeProtection.UnProtectCommand), "UnProtect")
-					if tsk != nil {
-						tsk.StartAndWait(debug)
-					}
-				}()
+				tsk := NewCommandTask(cnf, utils.CreateCmd(cnf.ExcludeProtection.ProtectCommand), "Protect")
+				if tsk != nil {
+					tsk.StartAndWait(debug)
+				}
 			} else {
-				defer func() {
-					tsk := NewConnToCommandTask(protBuffer, false, "UnProtect", utils.CreateCmd(cnf.ExcludeProtection.UnProtectCommand), cnf, debug)
-					if tsk != nil {
-						tsk.WaitOnCompletion(debug)
-					}
-				}()
+				tsk := NewCommandToConnTask(protBuffer, false, "Protect", utils.CreateCmd(cnf.ExcludeProtection.ProtectCommand), cnf, debug)
+				if tsk != nil {
+					tsk.WaitOnCompletion(debug)
+				}
+			}
+			if len(cnf.ExcludeProtection.UnProtectCommand) > 0 {
+				if protBuffer == nil {
+					defer func() {
+						tsk := NewCommandTask(cnf, utils.CreateCmd(cnf.ExcludeProtection.UnProtectCommand), "UnProtect")
+						if tsk != nil {
+							tsk.StartAndWait(debug)
+						}
+					}()
+				} else {
+					defer func() {
+						tsk := NewConnToCommandTask(protBuffer, false, "UnProtect", utils.CreateCmd(cnf.ExcludeProtection.UnProtectCommand), cnf, debug)
+						if tsk != nil {
+							tsk.WaitOnCompletion(debug)
+						}
+					}()
+				}
 			}
 		}
 	}
