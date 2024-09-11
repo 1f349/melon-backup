@@ -85,7 +85,7 @@ func (p *SenderPacket) ReadFrom(r io.Reader) (n int64, err error) {
 		log.Error("pk_s_rf : c")
 	}
 	fbuff := make([]byte, 1)
-	cbr, err = io.ReadFull(r, tbuff)
+	cbr, err = io.ReadFull(r, fbuff)
 	br += cbr
 	if err != nil {
 		return int64(br), err
