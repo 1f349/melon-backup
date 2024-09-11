@@ -41,6 +41,9 @@ func NewClient(conf conf.ConfigYAML, debug bool) (*Client, error) {
 func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) {
 	var sd *SenderPacket
 	if cnf.GetMode() == conf.UnStore || cnf.GetMode() == conf.Backup {
+		if debug {
+			log.Error("Sending Sender Packet...")
+		}
 		pk := &SenderPacket{
 			Mode:                   cnf.GetMode().ToInt(),
 			Services:               &ServiceList{List: cnf.Services.List},
@@ -54,6 +57,9 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 			_ = conn.Close()
 			return nil, err
 		}
+		if debug {
+			log.Error("Waiting for Ingester Packet...")
+		}
 		rv := &IngesterPacket{}
 		_, err = rv.ReadFrom(conn)
 		if err != nil {
@@ -62,11 +68,17 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 		}
 		sd = &SenderPacket{Mode: rv.Mode}
 	} else {
+		if debug {
+			log.Error("Waiting for Sender Packet...")
+		}
 		rv := &SenderPacket{}
 		_, err := rv.ReadFrom(conn)
 		if err != nil {
 			_ = conn.Close()
 			return nil, err
+		}
+		if debug {
+			log.Error("Sending Ingester Packet...")
 		}
 		pk := &IngesterPacket{Mode: cnf.GetMode().ToInt()}
 		_, err = pk.WriteTo(conn)

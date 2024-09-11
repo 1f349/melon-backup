@@ -42,6 +42,9 @@ func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML, debug bool) *Multipl
 				return
 			case x := <-mx.newConnectionChan:
 				if x {
+					if debug {
+						log.Error("Connection Requested...")
+					}
 					cc, err := net.Dial("tcp", cnf.Net.GetProxyLocalAddr()+":"+strconv.Itoa(int(cnf.Net.GetProxyLocalPort())))
 					if err != nil {
 						if debug {
@@ -49,9 +52,14 @@ func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML, debug bool) *Multipl
 						}
 						conn.SendPacket(&comm.Packet{Type: comm.ConnectionReset})
 						break
+					} else if debug {
+						log.Error("Client connected!")
 					}
 					if mx.addClient(cc) {
 						_ = cc.Close()
+						if debug {
+							log.Error("Client not added!")
+						}
 					}
 				}
 			}

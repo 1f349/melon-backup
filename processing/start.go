@@ -54,9 +54,11 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 		log.Error("Configuration for target address missing!")
 		return 1
 	}
+	remoteMode := conf.ModeFromInt(commClient.SenderData.Mode)
+	log.Info("Local Mode: " + cnf.GetMode())
+	log.Info("Remote Mode: " + remoteMode)
 	sL := StopServices(cnf, debug)
 	defer StartServices(cnf, sL, getServiceSliceFromSenderData(commClient.SenderData), debug)
-	remoteMode := conf.ModeFromInt(commClient.SenderData.Mode)
 	if cnf.TriggerReboot && commClient.SenderData.RequestReboot {
 		defer startReboot(cnf, debug)
 	}

@@ -50,6 +50,9 @@ func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener,
 				ls.Close()
 				return
 			}
+			if debug {
+				log.Error("Accepted Client, awaiting connection: " + cc.RemoteAddr().String())
+			}
 			ls.conn.SendPacket(&comm.Packet{Type: comm.ConnectionStartRequest})
 			select {
 			case <-ls.closeChan:
@@ -58,6 +61,11 @@ func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener,
 			case cID := <-ls.connectionIDChan:
 				if cID < 1 || ls.addClient(cc, cID) {
 					_ = cc.Close()
+					if debug {
+						log.Error("Client not added!")
+					}
+				} else if debug {
+					log.Error("Added Client: " + strconv.Itoa(cID))
 				}
 			}
 		}
