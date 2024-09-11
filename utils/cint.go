@@ -49,11 +49,13 @@ func ReadCompressedInt(r io.Reader) (n int, err error, val int) {
 		moreBytes = (cBuff[0] & 128) != 0
 		cBuff[0] &^= 128
 		valToRet += int(uint64(cBuff[0]) << cBitSize)
-		cBitSize += 7
-		cbr, err = io.ReadFull(r, cBuff)
-		br += cbr
-		if err != nil {
-			return br, err, valToRet
+		if moreBytes {
+			cBitSize += 7
+			cbr, err = io.ReadFull(r, cBuff)
+			br += cbr
+			if err != nil {
+				return br, err, valToRet
+			}
 		}
 	}
 	return br, nil, valToRet
