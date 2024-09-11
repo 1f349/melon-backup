@@ -8,7 +8,7 @@ import (
 )
 
 func StartServices(cnf conf.ConfigYAML, previouslyStopped []string, sent []string, debug bool) {
-	if len(cnf.Services.ReloadCommand) > 0 {
+	if cnf.GetMode() != conf.Store && cnf.GetMode() != conf.UnStore && len(cnf.Services.ReloadCommand) > 0 {
 		log.Info("Reloading Services...")
 		cmdRl := utils.CreateCmd(cnf.Services.ReloadCommand)
 		err := cmdRl.Run()
@@ -19,7 +19,7 @@ func StartServices(cnf conf.ConfigYAML, previouslyStopped []string, sent []strin
 			return
 		}
 	}
-	if len(cnf.Services.StartCommand) > 0 {
+	if cnf.GetMode() != conf.Store && cnf.GetMode() != conf.UnStore && len(cnf.Services.StartCommand) > 0 {
 		if cnf.Services.Restore {
 			toRestore := slices.DeleteFunc(sent, func(s string) bool {
 				return !slices.Contains(previouslyStopped, s)

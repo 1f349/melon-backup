@@ -160,6 +160,9 @@ func getServiceSliceFromSenderData(p *comm.SenderPacket) []string {
 }
 
 func startReboot(cnf conf.ConfigYAML, debug bool) {
+	if cnf.GetMode() == conf.Store || cnf.GetMode() == conf.UnStore {
+		return
+	}
 	cmd := utils.CreateCmd(cnf.RebootCommand)
 	if cmd != nil {
 		err := cmd.Run()
