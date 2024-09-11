@@ -5,7 +5,6 @@ import (
 	"github.com/charmbracelet/log"
 	"io"
 	"os/exec"
-	"strconv"
 	"time"
 )
 
@@ -115,21 +114,18 @@ func (t ConnToCommand) writeSTDIn(debug bool) {
 		_ = t.pipeIn.Close()
 		_ = t.conn.Close()
 		close(t.endChan)
-		if t.cmd.ProcessState == nil {
-			err := t.cmd.Process.Kill()
-			if err != nil && debug {
-				log.Error(err)
-			}
-		}
+		//if t.cmd.ProcessState == nil {
+		//	err := t.cmd.Process.Kill()
+		//	if err != nil && debug {
+		//		log.Error(err)
+		//	}
+		//}
 	}()
 	buff := make([]byte, t.cnf.GetTarBufferSize())
 	var br int
 	var err error
 	for t.cmd.ProcessState == nil {
 		br, err = t.conn.Read(buff)
-		if debug {
-			log.Error("DBG : " + strconv.Itoa(br))
-		}
 		if err != nil {
 			if debug {
 				log.Error(err)
