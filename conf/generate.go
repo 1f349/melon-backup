@@ -45,9 +45,9 @@ func Generate(target io.Writer) {
 		},
 		TriggerReboot: true,
 		RebootCommand: []string{"systemctl", "reboot"},
-		RSyncCommand:  []string{"rsync", "-vcrlHAXogtUSxz", "--mkpath", "--open-noatime", "--super", "--delete-during", "--force", "--numeric-ids", "--timeout=300", "--port=873", "--inplace", "--exclude", "/var/log/rsync.log", "--exclude", "/var/run/rsyncd.pid", "--exclude", "/var/run/rsync.lock", "--exclude", "/dev", "--stats", "/", "rbackupuser@127.0.0.1::files/"},
-		TarCommand:    []string{"tar", "-zcvpSf", "-", "--numeric-owner", "--acls", "--selinux", "--xattrs", "--one-file-system", "--exclude=/var/log/rsync.log", "--exclude=/var/run/rsyncd.pid", "--exclude=/var/run/rsync.lock", "--exclude=/dev", "/"},
-		UnTarCommand:  []string{"tar", "-zxvpSUf", "-", "--recursive-unlink", "--numeric-owner", "--same-owner", "--acls", "--selinux", "--xattrs", "-C", "/"},
+		RSyncCommand:  []string{"rsync", "-vcrlHAXogtUSxz", "--mkpath", "--open-noatime", "--super", "--delete-during", "--force", "--numeric-ids", "--timeout=300", "--port=873", "--inplace", "--exclude", "/var/log/rsync.log", "--exclude", "/var/run/rsyncd.pid", "--exclude", "/var/run/rsync.lock", "--exclude", "/dev", "--exclude", "/sys", "--exclude", "/proc", "--exclude", "/etc/rsyncd.conf", "--exclude", "/etc/rsyncd.secrets", "--exclude", "/etc/melon-backup", "--stats", "/", "rbackupuser@127.0.0.1::files/"},
+		TarCommand:    []string{"tar", "-zcvpSPf", "-", "--numeric-owner", "--acls", "--selinux", "--xattrs", "--one-file-system", "--exclude=/var/log/rsync.log", "--exclude=/var/run/rsyncd.pid", "--exclude=/var/run/rsync.lock", "--exclude=/dev", "--exclude=/sys", "--exclude=/proc", "--exclude=/etc/rsyncd.conf", "--exclude=/etc/rsyncd.secrets", "--exclude=/etc/melon-backup", "/"},
+		UnTarCommand:  []string{"tar", "-zxvpSUPf", "-", "--recursive-unlink", "--numeric-owner", "--same-owner", "--acls", "--selinux", "--xattrs", "--exclude=/var/log/rsync.log", "--exclude=/var/run/rsyncd.pid", "--exclude=/var/run/rsync.lock", "--exclude=/dev", "--exclude=/sys", "--exclude=/proc", "--exclude=/etc/rsyncd.conf", "--exclude=/etc/rsyncd.secrets", "--exclude=/etc/melon-backup", "-C", "/"},
 		TarBufferSize: 8192,
 	}
 	err := cEnc.Encode(&cnf)
