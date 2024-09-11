@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/log"
 	"io"
 	"os/exec"
+	"strconv"
 	"time"
 )
 
@@ -126,6 +127,9 @@ func (t ConnToCommand) writeSTDIn(debug bool) {
 	var err error
 	for t.cmd.ProcessState == nil {
 		br, err = t.conn.Read(buff)
+		if debug {
+			log.Error("DBG : " + strconv.Itoa(br))
+		}
 		if err != nil {
 			if debug {
 				log.Error(err)
