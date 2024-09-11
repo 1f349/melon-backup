@@ -2,23 +2,21 @@ package processing
 
 import (
 	"github.com/1f349/melon-backup/conf"
-	"github.com/1f349/melon-backup/utils"
 	"github.com/charmbracelet/log"
 	"io"
-	"net"
 	"os/exec"
 )
 
-type Tar struct {
-	cmd     *exec.Cmd
-	cnf     conf.ConfigYAML
-	conn    net.Conn
-	pipeOut io.ReadCloser
-	pipeErr io.ReadCloser
+type CommandToConn struct {
+	cmd         *exec.Cmd
+	commandName string
+	cnf         conf.ConfigYAML
+	conn        io.ReadWriteCloser
+	pipeOut     io.ReadCloser
+	pipeErr     io.ReadCloser
 }
 
-func NewTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *Tar {
-	cmd := utils.CreateCmd(cnf.TarCommand)
+func NewCommandToConnTask(conn io.ReadWriteCloser, keepAlive bool, name string, cmd *exec.Cmd, cnf conf.ConfigYAML, debug bool) *CommandToConn {
 	if cmd == nil {
 		log.Error("No command!")
 		return nil
@@ -42,21 +40,24 @@ func NewTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *Tar {
 		}
 		return nil
 	}
-	tar := &Tar{
-		cmd:     cmd,
-		cnf:     cnf,
-		conn:    conn,
-		pipeOut: stdout,
-		pipeErr: stderr,
+	cmdToConn := &CommandToConn{
+		cmd:         cmd,
+		commandName: name,
+		cnf:         cnf,
+		conn:        conn,
+		pipeOut:     stdout,
+		pipeErr:     stderr,
 	}
-	log.Info("Tar Operation Started!")
-	go tar.readSTDErr(debug)
-	go tar.readSTDOut(debug)
-	go tar.eatAllKeepAlives()
-	return tar
+	log.Info(name + " Operation Started!")
+	go cmdToConn.readSTDErr(debug)
+	go cmdToConn.readSTDOut(debug)
+	if keepAlive {
+		go cmdToConn.eatAllKeepAlives()
+	}
+	return cmdToConn
 }
 
-func (t *Tar) WaitOnCompletion(debug bool) {
+func (t *CommandToConn) WaitOnCompletion(debug bool) {
 	err := t.cmd.Wait()
 	if err != nil {
 		if debug {
@@ -64,10 +65,10 @@ func (t *Tar) WaitOnCompletion(debug bool) {
 		}
 		return
 	}
-	log.Info("Tar Operation Completed!")
+	log.Info(t.commandName + " Operation Completed!")
 }
 
-func (t *Tar) eatAllKeepAlives() {
+func (t *CommandToConn) eatAllKeepAlives() {
 	buff := make([]byte, t.cnf.GetTarBufferSize())
 	var err error
 	for t.cmd.ProcessState == nil {
@@ -78,7 +79,7 @@ func (t *Tar) eatAllKeepAlives() {
 	}
 }
 
-func (t *Tar) readSTDErr(debug bool) {
+func (t *CommandToConn) readSTDErr(debug bool) {
 	defer func() {
 		bts, err := io.ReadAll(t.pipeErr)
 		if err != nil {
@@ -105,7 +106,7 @@ func (t *Tar) readSTDErr(debug bool) {
 	}
 }
 
-func (t *Tar) readSTDOut(debug bool) {
+func (t *CommandToConn) readSTDOut(debug bool) {
 	defer func() {
 		_, err := io.ReadAll(t.pipeOut)
 		if err != nil && debug {

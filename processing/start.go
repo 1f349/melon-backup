@@ -12,6 +12,7 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 	var err error
 	var commLstn *comm.Listener = nil
 	var commClient *comm.Client = nil
+
 	if cnf.Net.ListeningAddr != "" {
 		log.Info("Starting Listener on: " + cnf.Net.ListeningAddr + ":" + strconv.Itoa(int(cnf.Net.ListeningPort)))
 		commLstn, err = comm.NewListener(cnf, debug)
@@ -24,6 +25,7 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 			log.Info("Listener started!")
 		}
 	}
+
 	if cnf.Net.TargetAddr != "" {
 		log.Info("Starting Connection to Target at: " + cnf.Net.TargetAddr + ":" + strconv.Itoa(int(cnf.Net.TargetPort)))
 		commClient, err = comm.NewClient(cnf, debug)
@@ -54,17 +56,59 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 		log.Error("Configuration for target address missing!")
 		return 1
 	}
+
 	remoteMode := conf.ModeFromInt(commClient.SenderData.Mode)
 	log.Info("Local Mode: " + cnf.GetMode())
 	log.Info("Remote Mode: " + remoteMode)
+
 	sL := StopServices(cnf, debug)
-	defer StartServices(cnf, sL, getServiceSliceFromSenderData(commClient.SenderData), debug)
 	if cnf.TriggerReboot && commClient.SenderData.RequestReboot {
-		defer startReboot(cnf, debug)
+		defer func() {
+			ReloadServices(cnf, debug)
+			startReboot(cnf, debug)
+		}()
+	} else {
+		defer StartServices(cnf, sL, getServiceSliceFromSenderData(commClient.SenderData), debug)
 	}
+
+	var protBuffer *utils.BufferDummyClose
+	if cnf.ExcludeProtection.StdOutBuffStdInOn {
+		protBuffer = &utils.BufferDummyClose{}
+	}
+	if len(cnf.ExcludeProtection.ProtectCommand) > 0 {
+		if protBuffer == nil {
+			tsk := NewCommandTask(cnf, utils.CreateCmd(cnf.ExcludeProtection.ProtectCommand), "Protect")
+			if tsk != nil {
+				tsk.StartAndWait(debug)
+			}
+		} else {
+			tsk := NewCommandToConnTask(protBuffer, false, "Protect", utils.CreateCmd(cnf.ExcludeProtection.ProtectCommand), cnf, debug)
+			if tsk != nil {
+				tsk.WaitOnCompletion(debug)
+			}
+		}
+		if len(cnf.ExcludeProtection.UnProtectCommand) > 0 {
+			if protBuffer == nil {
+				defer func() {
+					tsk := NewCommandTask(cnf, utils.CreateCmd(cnf.ExcludeProtection.UnProtectCommand), "UnProtect")
+					if tsk != nil {
+						tsk.StartAndWait(debug)
+					}
+				}()
+			} else {
+				defer func() {
+					tsk := NewConnToCommandTask(protBuffer, false, "UnProtect", utils.CreateCmd(cnf.ExcludeProtection.UnProtectCommand), cnf, debug)
+					if tsk != nil {
+						tsk.WaitOnCompletion(debug)
+					}
+				}()
+			}
+		}
+	}
+
 	switch cnf.GetMode() {
 	case conf.Backup:
-		if remoteMode == conf.Restore {
+		if remoteMode == conf.Restore && len(cnf.RSyncCommand) > 0 {
 			commClient.ActivateWithPacketProcessing()
 			tsk := NewRsyncSender(cnf, commClient, debug)
 			if tsk != nil {
@@ -72,13 +116,13 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 			} else {
 				return 7
 			}
-		} else if remoteMode == conf.Store {
+		} else if remoteMode == conf.Store || (len(cnf.RSyncCommand) < 1 && remoteMode == conf.Restore) {
 			conn := commClient.ActivateForPureConnection()
 			if conn == nil {
 				log.Error("Pure Connection Error!")
 				return 6
 			}
-			tsk := NewTarTask(conn, cnf, debug)
+			tsk := NewCommandToConnTask(conn, true, "Tar", utils.CreateCmd(cnf.TarCommand), cnf, debug)
 			if tsk != nil {
 				tsk.WaitOnCompletion(debug)
 			} else {
@@ -106,7 +150,7 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 			return 5
 		}
 	case conf.Restore:
-		if remoteMode == conf.Backup {
+		if remoteMode == conf.Backup && len(cnf.RSyncCommand) > 0 {
 			commClient.ActivateWithPacketProcessing()
 			tsk := NewRsyncIngester(cnf, commClient, debug)
 			if tsk != nil {
@@ -114,13 +158,13 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 			} else {
 				return 7
 			}
-		} else if remoteMode == conf.UnStore {
+		} else if remoteMode == conf.UnStore || (len(cnf.RSyncCommand) < 1 && remoteMode == conf.Backup) {
 			conn := commClient.ActivateForPureConnection()
 			if conn == nil {
 				log.Error("Pure Connection Error!")
 				return 6
 			}
-			tsk := NewUnTarTask(conn, cnf, debug)
+			tsk := NewConnToCommandTask(conn, true, "UnTar", utils.CreateCmd(cnf.UnTarCommand), cnf, debug)
 			if tsk != nil {
 				tsk.WaitOnCompletion(debug)
 			}

@@ -5,17 +5,18 @@ import "github.com/1f349/melon-backup/utils"
 var Debug bool
 
 type ConfigYAML struct {
-	Mode          string       `yaml:"mode"`
-	StoreFile     string       `yaml:"storeFile"`
-	Services      ServiceYAML  `yaml:"services"`
-	Net           NetYAML      `yaml:"net"`
-	Security      SecurityYAML `yaml:"security"`
-	TriggerReboot bool         `yaml:"triggerReboot"`
-	RebootCommand []string     `yaml:"rebootCommand"`
-	RSyncCommand  []string     `yaml:"rsyncCommand"`
-	TarCommand    []string     `yaml:"tarCommand"`
-	UnTarCommand  []string     `yaml:"unTarCommand"`
-	TarBufferSize uint32       `yaml:"tarBufferSize"`
+	Mode              string             `yaml:"mode"`
+	StoreFile         string             `yaml:"storeFile"`
+	Services          ServiceYAML        `yaml:"services"`
+	Net               NetYAML            `yaml:"net"`
+	Security          SecurityYAML       `yaml:"security"`
+	ExcludeProtection ExcludeProtectYAML `yaml:"excludeProtection"`
+	TriggerReboot     bool               `yaml:"triggerReboot"`
+	RebootCommand     []string           `yaml:"rebootCommand"`
+	RSyncCommand      []string           `yaml:"rsyncCommand"`
+	TarCommand        []string           `yaml:"tarCommand"`
+	UnTarCommand      []string           `yaml:"unTarCommand"`
+	TarBufferSize     uint32             `yaml:"tarBufferSize"`
 }
 
 func (c ConfigYAML) GetMode() Mode {

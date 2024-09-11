@@ -43,6 +43,11 @@ func Generate(target io.Writer) {
 			RSyncPassword: "RsYnC8--",
 			NoSystemCerts: true,
 		},
+		ExcludeProtection: ExcludeProtectYAML{
+			ProtectCommand:    []string{"tar", "-zcvpSPf", "-", "--numeric-owner", "--acls", "--selinux", "--xattrs", "--atime-preserve", "/var/log/rsync.log", "/var/run/rsyncd.pid", "/var/run/rsync.lock", "/etc/rsyncd.conf", "/etc/rsyncd.secrets", "/etc/melon-backup"},
+			UnProtectCommand:  []string{"tar", "-zxvpSPf", "-", "--numeric-owner", "--same-owner", "--acls", "--selinux", "--xattrs", "--atime-preserve", "-C", "/"},
+			StdOutBuffStdInOn: true,
+		},
 		TriggerReboot: true,
 		RebootCommand: []string{"systemctl", "reboot"},
 		RSyncCommand:  []string{"rsync", "-vcrlHAXogtUSxz", "--mkpath", "--open-noatime", "--super", "--delete-during", "--force", "--numeric-ids", "--timeout=300", "--port=873", "--inplace", "--exclude", "/var/log/rsync.log", "--exclude", "/var/run/rsyncd.pid", "--exclude", "/var/run/rsync.lock", "--exclude", "/dev", "--exclude", "/sys", "--exclude", "/proc", "--exclude", "/etc/rsyncd.conf", "--exclude", "/etc/rsyncd.secrets", "--exclude", "/etc/melon-backup", "--stats", "/", "rbackupuser@127.0.0.1::files/"},

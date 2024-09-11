@@ -2,26 +2,24 @@ package processing
 
 import (
 	"github.com/1f349/melon-backup/conf"
-	"github.com/1f349/melon-backup/utils"
 	"github.com/charmbracelet/log"
 	"io"
-	"net"
 	"os/exec"
 	"time"
 )
 
-type UnTar struct {
-	cmd     *exec.Cmd
-	cnf     conf.ConfigYAML
-	conn    net.Conn
-	pipeIn  io.WriteCloser
-	pipeOut io.ReadCloser
-	pipeErr io.ReadCloser
-	endChan chan struct{}
+type ConnToCommand struct {
+	cmd         *exec.Cmd
+	commandName string
+	cnf         conf.ConfigYAML
+	conn        io.ReadWriteCloser
+	pipeIn      io.WriteCloser
+	pipeOut     io.ReadCloser
+	pipeErr     io.ReadCloser
+	endChan     chan struct{}
 }
 
-func NewUnTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *UnTar {
-	cmd := utils.CreateCmd(cnf.UnTarCommand)
+func NewConnToCommandTask(conn io.ReadWriteCloser, keepAlive bool, name string, cmd *exec.Cmd, cnf conf.ConfigYAML, debug bool) *ConnToCommand {
 	if cmd == nil {
 		log.Error("No command!")
 		return nil
@@ -56,28 +54,29 @@ func NewUnTarTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *UnTar {
 		}
 		return nil
 	}
-	tar := &UnTar{
-		cmd:     cmd,
-		cnf:     cnf,
-		conn:    conn,
-		pipeOut: stdout,
-		pipeErr: stderr,
-		pipeIn:  stdin,
-		endChan: make(chan struct{}),
+	commToCmd := &ConnToCommand{
+		cmd:         cmd,
+		commandName: name,
+		cnf:         cnf,
+		conn:        conn,
+		pipeOut:     stdout,
+		pipeErr:     stderr,
+		pipeIn:      stdin,
+		endChan:     make(chan struct{}),
 	}
-	log.Info("UnTar Operation Started!")
+	log.Info(name + " Operation Started!")
 	if debug {
-		go tar.readSTDErr()
+		go commToCmd.readSTDErr()
 	}
-	go tar.writeSTDIn(debug)
-	go tar.readSTDOut(debug)
-	if cnf.Net.KeepAliveTime > time.Millisecond {
-		go tar.sendKeepAlives()
+	go commToCmd.writeSTDIn(debug)
+	go commToCmd.readSTDOut(debug)
+	if keepAlive && cnf.Net.KeepAliveTime > time.Millisecond {
+		go commToCmd.sendKeepAlives()
 	}
-	return tar
+	return commToCmd
 }
 
-func (t *UnTar) WaitOnCompletion(debug bool) {
+func (t *ConnToCommand) WaitOnCompletion(debug bool) {
 	<-t.endChan
 	err := t.cmd.Wait()
 	if err != nil {
@@ -86,10 +85,10 @@ func (t *UnTar) WaitOnCompletion(debug bool) {
 		}
 		return
 	}
-	log.Info("UnTar Operation Completed!")
+	log.Info(t.commandName + " Operation Completed!")
 }
 
-func (t *UnTar) sendKeepAlives() {
+func (t *ConnToCommand) sendKeepAlives() {
 	kAlive := time.NewTimer(t.cnf.Net.KeepAliveTime)
 	defer func() {
 		kAlive.Stop()
@@ -110,7 +109,7 @@ func (t *UnTar) sendKeepAlives() {
 	}
 }
 
-func (t UnTar) writeSTDIn(debug bool) {
+func (t ConnToCommand) writeSTDIn(debug bool) {
 	defer func() {
 		_ = t.pipeIn.Close()
 		_ = t.conn.Close()
@@ -143,7 +142,7 @@ func (t UnTar) writeSTDIn(debug bool) {
 	}
 }
 
-func (t *UnTar) readSTDErr() {
+func (t *ConnToCommand) readSTDErr() {
 	defer func() {
 		bts, err := io.ReadAll(t.pipeErr)
 		if err != nil {
@@ -166,7 +165,7 @@ func (t *UnTar) readSTDErr() {
 	}
 }
 
-func (t *UnTar) readSTDOut(debug bool) {
+func (t *ConnToCommand) readSTDOut(debug bool) {
 	defer func() {
 		bts, err := io.ReadAll(t.pipeOut)
 		if err != nil {
