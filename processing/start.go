@@ -97,6 +97,9 @@ func Start(cnf conf.ConfigYAML, debug bool) int {
 						}
 					}()
 				} else {
+					if debug {
+						log.Error("DBG : " + strconv.Itoa(protBuffer.Len()))
+					}
 					defer func() {
 						tsk := NewConnToCommandTask(protBuffer, false, "UnProtect", utils.CreateCmd(cnf.ExcludeProtection.UnProtectCommand), cnf, debug)
 						if tsk != nil {
