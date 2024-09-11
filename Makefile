@@ -2,6 +2,7 @@ SHELL := /bin/bash
 PRODUCT_NAME := melon-backup
 BIN := dist/${PRODUCT_NAME}
 DNAME := ${PRODUCT_NAME}_
+NBIN := ${PRODUCT_NAME}
 ENTRY_POINT := ./cmd/${PRODUCT_NAME}
 HASH := $(shell git rev-parse --short HEAD)
 COMMIT_DATE := $(shell git show -s --format=%ci ${HASH})
@@ -13,11 +14,12 @@ COMP_BIN := /usr/lib/go-1.22/bin/go
 ifeq ($(OS),Windows_NT)
 	BIN := $(BIN).exe
 	DNAME := $(DNAME).exe
+	NBIN := $(NBIN).exe
 endif
 
-.PHONY: build dev test clean
+.PHONY: build dev test clean deploy
 
-build:
+build: clean
 	mkdir -p dist/
 	${COMP_BIN} build -o "${BIN}" -ldflags="${LD_FLAGS}" ${ENTRY_POINT}
 
@@ -32,3 +34,8 @@ test:
 clean:
 	${COMP_BIN} clean
 	rm -r -f dist/
+
+deploy: build
+	sudo mkdir -p /etc/melon-backup
+	sudo cp "${BIN}" /usr/local/bin
+	sudo "/usr/local/bin/$(NBIN)" generate -config=/etc/melon-backup/example.conf
