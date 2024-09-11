@@ -2,7 +2,9 @@ package comm
 
 import (
 	"errors"
+	"github.com/1f349/melon-backup/conf"
 	"github.com/1f349/melon-backup/utils"
+	"github.com/charmbracelet/log"
 	"io"
 )
 
@@ -65,13 +67,22 @@ func (p *SenderPacket) ReadFrom(r io.Reader) (n int64, err error) {
 	if err != nil {
 		return int64(br), err
 	}
+	if conf.Debug {
+		log.Error("pk_s_rf : a")
+	}
 	if tbuff[0] != byte(Sender) {
 		return int64(br), errors.New("invalid packet type")
+	}
+	if conf.Debug {
+		log.Error("pk_s_rf : b")
 	}
 	cbr, err, p.Mode = utils.ReadCompressedInt(r)
 	br += cbr
 	if err != nil {
 		return int64(br), err
+	}
+	if conf.Debug {
+		log.Error("pk_s_rf : c")
 	}
 	fbuff := make([]byte, 1)
 	cbr, err = io.ReadFull(r, tbuff)
@@ -79,11 +90,17 @@ func (p *SenderPacket) ReadFrom(r io.Reader) (n int64, err error) {
 	if err != nil {
 		return int64(br), err
 	}
+	if conf.Debug {
+		log.Error("pk_s_rf : d")
+	}
 	p.RequestReboot = (fbuff[0] & 2) != 0
 	p.RequestServiceStop = (fbuff[0] & 4) != 0
 	p.RequestServiceRestart = (fbuff[0] & 8) != 0
 	p.RequestServiceStartNew = (fbuff[0] & 16) != 0
 	if fbuff[0]&1 != 0 {
+		if conf.Debug {
+			log.Error("pk_s_rf : e")
+		}
 		if p.Services == nil {
 			p.Services = &ServiceList{}
 		}
