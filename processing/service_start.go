@@ -25,9 +25,14 @@ func StartServices(cnf conf.ConfigYAML, previouslyStopped []string, sent []strin
 	ReloadServices(cnf, debug)
 	if cnf.GetMode() != conf.Store && cnf.GetMode() != conf.UnStore && len(cnf.Services.StartCommand) > 0 {
 		if cnf.Services.Restore {
-			toRestore := slices.DeleteFunc(sent, func(s string) bool {
-				return !slices.Contains(previouslyStopped, s)
-			})
+			var toRestore []string
+			if cnf.GetMode() == conf.Backup {
+				toRestore = previouslyStopped
+			} else {
+				toRestore = slices.DeleteFunc(sent, func(s string) bool {
+					return !slices.Contains(previouslyStopped, s)
+				})
+			}
 			log.Info("Service Restore Task Started...")
 			for _, n := range toRestore {
 				log.Info("Starting: " + n)
