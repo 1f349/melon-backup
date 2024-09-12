@@ -12,8 +12,9 @@ import (
 )
 
 type daemonCmd struct {
-	configPath string
-	debug      bool
+	configPath  string
+	debug       bool
+	multiAccess bool
 }
 
 func (d *daemonCmd) Name() string {
@@ -25,7 +26,7 @@ func (d *daemonCmd) Synopsis() string {
 }
 
 func (d *daemonCmd) Usage() string {
-	return `daemon [-config <config file>] [--debug]
+	return `daemon [-config <config file>] [-debug] [-multi]
   Run the daemon using the specified config file.
 `
 }
@@ -33,6 +34,7 @@ func (d *daemonCmd) Usage() string {
 func (d *daemonCmd) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&d.configPath, "config", "", "/path/to/config.yml : path to the configuration file")
 	f.BoolVar(&d.debug, "debug", false, "enable debug mode")
+	f.BoolVar(&d.multiAccess, "multi", false, "allow acceptance of clients when listening till the first valid connection")
 }
 
 func (d *daemonCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
@@ -63,7 +65,7 @@ func (d *daemonCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}
 		return subcommands.ExitFailure
 	}
 
-	rv := processing.Start(cnf)
+	rv := processing.Start(cnf, d.multiAccess)
 
 	if rv != 0 {
 		return subcommands.ExitStatus(rv + 10)

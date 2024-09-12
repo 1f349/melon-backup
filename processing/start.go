@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func Start(cnf conf.ConfigYAML) int {
+func Start(cnf conf.ConfigYAML, multiAccess bool) int {
 	var err error
 	var commLstn *comm.Listener = nil
 	var commClient *comm.Client = nil
@@ -26,6 +26,27 @@ func Start(cnf conf.ConfigYAML) int {
 		}
 	}
 
+	if cnf.Net.TargetAddr == "" && commLstn != nil && multiAccess {
+		log.Info("Waiting for Target Connection...")
+		for commClient == nil {
+			commClient, err = commLstn.Accept()
+			if err != nil && conf.Debug {
+				log.Error(err)
+			}
+		}
+		if err != nil {
+			if conf.Debug {
+				log.Error(err)
+			}
+			log.Error("Unable to connect to a target!")
+			return 3
+		} else {
+			log.Info("Target Connection started!")
+		}
+
+		return startFromCommClient(cnf, commClient)
+	}
+
 	if cnf.Net.TargetAddr != "" {
 		log.Info("Starting Connection to Target at: " + cnf.Net.TargetAddr + ":" + strconv.Itoa(int(cnf.Net.TargetPort)))
 		commClient, err = comm.NewClient(cnf)
@@ -36,7 +57,6 @@ func Start(cnf conf.ConfigYAML) int {
 			log.Error("Unable to connect to the target!")
 			return 2
 		} else {
-			defer commClient.Close()
 			log.Info("Target Connection started!")
 		}
 	} else if commLstn != nil {
@@ -49,13 +69,18 @@ func Start(cnf conf.ConfigYAML) int {
 			log.Error("Unable to connect to a target!")
 			return 3
 		} else {
-			defer commClient.Close()
 			log.Info("Target Connection started!")
 		}
 	} else {
 		log.Error("Configuration for target address missing!")
 		return 1
 	}
+
+	return startFromCommClient(cnf, commClient)
+}
+
+func startFromCommClient(cnf conf.ConfigYAML, commClient *comm.Client) int {
+	defer commClient.Close()
 
 	remoteMode := conf.ModeFromInt(commClient.SenderData.Mode)
 	log.Info("Local Mode: " + cnf.GetMode())
