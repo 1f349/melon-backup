@@ -10,7 +10,8 @@ func StopServices(cnf conf.ConfigYAML) []string {
 	if cnf.GetMode() != conf.Store && cnf.GetMode() != conf.UnStore && cnf.Services.Stop && len(cnf.Services.StopCommand) > 0 {
 		toRet := make([]string, 0, len(cnf.Services.List))
 		log.Info("Service Stop Task Started...")
-		for _, n := range cnf.Services.List {
+		for z := len(cnf.Services.List) - 1; z >= 0; z-- {
+			n := cnf.Services.List[z]
 			log.Info("Stopping: " + n)
 			cmd := utils.CreateCmd(append(cnf.Services.StopCommand, n))
 			err := cmd.Run()
