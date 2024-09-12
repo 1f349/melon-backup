@@ -44,8 +44,8 @@ func Generate(target io.Writer) {
 			NoSystemCerts: true,
 		},
 		ExcludeProtection: ExcludeProtectYAML{
-			ProtectCommand:    []string{"tar", "-zcvpSPf", "-", "--numeric-owner", "--acls", "--selinux", "--xattrs", "--atime-preserve", "/var/log/rsync.log", "/var/run/rsyncd.pid", "/var/run/rsync.lock", "/etc/rsyncd.conf", "/etc/rsyncd.secrets", "/etc/melon-backup"},
-			UnProtectCommand:  []string{"tar", "-zxvpSPf", "-", "--numeric-owner", "--same-owner", "--acls", "--selinux", "--xattrs", "--atime-preserve", "-C", "/"},
+			ProtectCommand:    []string{"tar", "-zcvpSPf", "-", "--numeric-owner", "--acls", "--selinux", "--xattrs", "--xattrs-include=*", "--atime-preserve", "/var/log/rsync.log", "/var/run/rsyncd.pid", "/var/run/rsync.lock", "/etc/rsyncd.conf", "/etc/rsyncd.secrets", "/etc/melon-backup"},
+			UnProtectCommand:  []string{"tar", "-zxvpSPf", "-", "--numeric-owner", "--same-owner", "--acls", "--selinux", "--xattrs", "--xattrs-include=*", "--atime-preserve", "-C", "/"},
 			StdOutBuffStdInOn: true,
 		},
 		TriggerReboot: true,
