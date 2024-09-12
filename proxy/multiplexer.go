@@ -87,16 +87,14 @@ func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML, debug bool) *Multipl
 					}
 					mx.conn.SendPacket(&comm.Packet{Type: comm.ConnectionReset})
 				}
-			case comm.ConnectionData, comm.ConnectionClosed:
-				go func() {
-					if cc := mx.getClient(p.ConnectionID); cc != nil {
-						select {
-						case <-mx.closeChan:
-						case <-cc.GetCloseChan():
-						case cc.GetPacketIntake() <- p:
-						}
+			case comm.ConnectionData, comm.ConnectionClosed, comm.ConnectionSendStartRequest:
+				if cc := mx.getClient(p.ConnectionID); cc != nil {
+					if p.Type == comm.ConnectionSendStartRequest {
+						cc.StartSend()
+					} else {
+						cc.ReceivePacket(p)
 					}
-				}()
+				}
 			}
 		}
 	}()

@@ -13,6 +13,7 @@ var ConnectionStarted = PacketType(2)
 var ConnectionReset = PacketType(3)
 var ConnectionClosed = PacketType(4)
 var ConnectionData = PacketType(5)
+var ConnectionSendStartRequest = PacketType(6)
 var ConnectionKeepAlive = PacketType(254)
 
 type Packet struct {
