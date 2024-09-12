@@ -21,6 +21,7 @@ func Generate(target io.Writer) {
 			ReloadCommand: []string{"systemctl", "daemon-reload"},
 			StopCommand:   []string{"systemctl", "stop"},
 			StartCommand:  []string{"systemctl", "start"},
+			StatusCommand: []string{"systemctl", "status"},
 			ManageRSync:   true,
 		},
 		Net: NetYAML{

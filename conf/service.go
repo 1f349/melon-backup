@@ -8,5 +8,6 @@ type ServiceYAML struct {
 	ReloadCommand []string `yaml:"reloadCommand"`
 	StopCommand   []string `yaml:"stopCommand"`
 	StartCommand  []string `yaml:"startCommand"`
+	StatusCommand []string `yaml:"statusCommand"`
 	ManageRSync   bool     `yaml:"manageRSync"`
 }

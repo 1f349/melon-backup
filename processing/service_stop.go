@@ -12,6 +12,21 @@ func StopServices(cnf conf.ConfigYAML) []string {
 		log.Info("Service Stop Task Started...")
 		for z := len(cnf.Services.List) - 1; z >= 0; z-- {
 			n := cnf.Services.List[z]
+			regSrv := true
+			if len(cnf.Services.StatusCommand) > 0 {
+				log.Info("Checking Service State: " + n)
+				cmdS := utils.CreateCmd(append(cnf.Services.StatusCommand, n))
+				err := cmdS.Run()
+				if err != nil {
+					if conf.Debug {
+						log.Error("Service State Alert For: " + n)
+						log.Error(err)
+						regSrv = false
+					}
+				} else {
+					log.Info("Service Active: " + n)
+				}
+			}
 			log.Info("Stopping: " + n)
 			cmd := utils.CreateCmd(append(cnf.Services.StopCommand, n))
 			err := cmd.Run()
@@ -20,12 +35,13 @@ func StopServices(cnf conf.ConfigYAML) []string {
 				if conf.Debug {
 					log.Error(err)
 				}
-			} else {
+			} else if regSrv {
 				toRet = append([]string{n}, toRet...)
 			}
 		}
 		log.Info("Service Stop Task Completed!")
 		return toRet
+	} else {
+		return cnf.Services.List
 	}
-	return nil
 }
