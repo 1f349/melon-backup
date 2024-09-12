@@ -89,7 +89,7 @@ func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML, debug bool) *Multipl
 				}
 			case comm.ConnectionData, comm.ConnectionClosed:
 				go func() {
-					if cc := mx.getClient(mx.cID); cc != nil {
+					if cc := mx.getClient(p.ConnectionID); cc != nil {
 						select {
 						case <-mx.closeChan:
 						case <-cc.GetCloseChan():
