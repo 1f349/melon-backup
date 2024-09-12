@@ -3,7 +3,7 @@ package utils
 import "sync"
 
 type queueItem[T any] struct {
-	value any
+	value T
 	next  *queueItem[T]
 }
 
