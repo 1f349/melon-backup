@@ -13,7 +13,6 @@ import (
 type Client struct {
 	conn           net.Conn
 	conf           conf.ConfigYAML
-	debug          bool
 	SenderData     *SenderPacket
 	closeChan      chan struct{}
 	sendChan       chan *Packet
@@ -22,7 +21,7 @@ type Client struct {
 	pureSocketMode bool
 }
 
-func NewClient(conf conf.ConfigYAML, debug bool) (*Client, error) {
+func NewClient(conf conf.ConfigYAML) (*Client, error) {
 	crt := conf.Security.GetCert()
 	if crt == nil {
 		return nil, errors.New("no certificate")
@@ -35,13 +34,13 @@ func NewClient(conf conf.ConfigYAML, debug bool) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newClient(conf, conn, debug)
+	return newClient(conf, conn)
 }
 
-func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) {
+func newClient(cnf conf.ConfigYAML, conn net.Conn) (*Client, error) {
 	var sd *SenderPacket
 	if cnf.GetMode() == conf.UnStore || cnf.GetMode() == conf.Backup {
-		if debug {
+		if conf.Debug {
 			log.Error("Sending Sender Packet...")
 		}
 		pk := &SenderPacket{
@@ -57,7 +56,7 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 			_ = conn.Close()
 			return nil, err
 		}
-		if debug {
+		if conf.Debug {
 			log.Error("Waiting for Ingester Packet...")
 		}
 		rv := &IngesterPacket{}
@@ -68,7 +67,7 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 		}
 		sd = &SenderPacket{Mode: rv.Mode}
 	} else {
-		if debug {
+		if conf.Debug {
 			log.Error("Waiting for Sender Packet...")
 		}
 		rv := &SenderPacket{}
@@ -77,7 +76,7 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 			_ = conn.Close()
 			return nil, err
 		}
-		if debug {
+		if conf.Debug {
 			log.Error("Sending Ingester Packet...")
 		}
 		pk := &IngesterPacket{Mode: cnf.GetMode().ToInt()}
@@ -91,7 +90,6 @@ func newClient(cnf conf.ConfigYAML, conn net.Conn, debug bool) (*Client, error) 
 	return &Client{
 		conn:           conn,
 		conf:           cnf,
-		debug:          debug,
 		SenderData:     sd,
 		closeChan:      make(chan struct{}),
 		sendChan:       make(chan *Packet),
@@ -125,7 +123,7 @@ func (c *Client) ActivateWithPacketProcessing() {
 			case p := <-c.sendChan:
 				_, err := p.WriteTo(c.conn)
 				if err != nil {
-					if c.debug {
+					if conf.Debug {
 						log.Error(err)
 					}
 					c.close(false)
@@ -134,7 +132,7 @@ func (c *Client) ActivateWithPacketProcessing() {
 			case <-kAlive.C:
 				_, err := pk.WriteTo(c.conn)
 				if err != nil {
-					if c.debug {
+					if conf.Debug {
 						log.Error(err)
 					}
 					c.close(false)
@@ -157,7 +155,7 @@ func (c *Client) ActivateWithPacketProcessing() {
 				p := &Packet{}
 				_, err := p.ReadFrom(c.conn)
 				if err != nil {
-					if c.debug {
+					if conf.Debug {
 						log.Error(err)
 					}
 					c.close(false)
@@ -229,7 +227,7 @@ func (c *Client) close(sendEnd bool) {
 		c.active = false
 		fp := &FinishPacket{}
 		_, err := fp.WriteTo(c.conn)
-		if err != nil && c.debug {
+		if err != nil && conf.Debug {
 			log.Error(err)
 		}
 		select {

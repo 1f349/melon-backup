@@ -20,7 +20,7 @@ func NewCommandTask(cnf conf.ConfigYAML, cmd *exec.Cmd, name string) *Command {
 	return &Command{cnf: cnf, cmd: cmd, commandName: name}
 }
 
-func (c *Command) StartAndWait(debug bool) {
+func (c *Command) StartAndWait() {
 	log.Info(c.commandName + " Started...")
 	if c.cmd == nil {
 		log.Error("No command!")
@@ -28,7 +28,7 @@ func (c *Command) StartAndWait(debug bool) {
 	}
 	bts, err := c.cmd.CombinedOutput()
 	if err != nil {
-		if debug {
+		if conf.Debug {
 			log.Error(err)
 		}
 	}

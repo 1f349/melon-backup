@@ -11,7 +11,6 @@ import (
 
 type Multiplexer struct {
 	conf              conf.ConfigYAML
-	debug             bool
 	active            bool
 	conn              *comm.Client
 	newConnectionChan chan bool
@@ -22,10 +21,9 @@ type Multiplexer struct {
 	cID               int
 }
 
-func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML, debug bool) *Multiplexer {
+func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML) *Multiplexer {
 	mx := &Multiplexer{
 		conf:              cnf,
-		debug:             debug,
 		active:            true,
 		conn:              conn,
 		newConnectionChan: make(chan bool),
@@ -42,22 +40,22 @@ func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML, debug bool) *Multipl
 				return
 			case x := <-mx.newConnectionChan:
 				if x {
-					if debug {
+					if conf.Debug {
 						log.Error("Connection Requested...")
 					}
 					cc, err := net.Dial("tcp", cnf.Net.GetProxyLocalAddr()+":"+strconv.Itoa(int(cnf.Net.GetProxyLocalPort())))
 					if err != nil {
-						if debug {
+						if conf.Debug {
 							log.Error(err)
 						}
 						conn.SendPacket(&comm.Packet{Type: comm.ConnectionReset})
 						break
-					} else if debug {
+					} else if conf.Debug {
 						log.Error("Client connected!")
 					}
 					if mx.addClient(cc) {
 						_ = cc.Close()
-						if debug {
+						if conf.Debug {
 							log.Error("Client not added!")
 						}
 					}
@@ -79,7 +77,7 @@ func NewMultiplexer(conn *comm.Client, cnf conf.ConfigYAML, debug bool) *Multipl
 					return
 				case mx.newConnectionChan <- true:
 				default:
-					if debug {
+					if conf.Debug {
 						log.Error("unexpected packet : ConnectionStartRequest")
 					}
 					mx.conn.SendPacket(&comm.Packet{Type: comm.ConnectionReset})
@@ -116,7 +114,7 @@ func (m *Multiplexer) addClient(c net.Conn) bool {
 		if _, exs := m.connections[m.cID]; exs {
 			return true
 		}
-		nCl := newClient(m.conn, m.cID, c, m.conf.Net.GetProxyBufferSize(), m.debug)
+		nCl := newClient(m.conn, m.cID, c, m.conf.Net.GetProxyBufferSize())
 		m.connections[m.cID] = nCl
 		go func() {
 			select {

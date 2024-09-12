@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/log"
 )
 
-func StopServices(cnf conf.ConfigYAML, debug bool) []string {
+func StopServices(cnf conf.ConfigYAML) []string {
 	if cnf.GetMode() != conf.Store && cnf.GetMode() != conf.UnStore && cnf.Services.Stop && len(cnf.Services.StopCommand) > 0 {
 		toRet := make([]string, 0, len(cnf.Services.List))
 		log.Info("Service Stop Task Started...")
@@ -16,7 +16,7 @@ func StopServices(cnf conf.ConfigYAML, debug bool) []string {
 			err := cmd.Run()
 			if err != nil {
 				log.Info("Failed to stop: " + n)
-				if debug {
+				if conf.Debug {
 					log.Error(err)
 				}
 			} else {

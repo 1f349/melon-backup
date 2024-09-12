@@ -15,10 +15,10 @@ type File struct {
 	endChan chan struct{}
 }
 
-func NewFileTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *File {
+func NewFileTask(conn net.Conn, cnf conf.ConfigYAML) *File {
 	flp, err := os.OpenFile(cnf.GetStoreFile(), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		if debug {
+		if conf.Debug {
 			log.Error(err)
 		}
 		return nil
@@ -30,7 +30,7 @@ func NewFileTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *File {
 		endChan: make(chan struct{}),
 	}
 	log.Info("Started Writing to file: " + cnf.GetStoreFile())
-	go fl.writeFileOut(debug)
+	go fl.writeFileOut()
 	if cnf.Net.KeepAliveTime > time.Millisecond {
 		go fl.sendKeepAlives()
 	}
@@ -63,7 +63,7 @@ func (t *File) sendKeepAlives() {
 	}
 }
 
-func (f *File) writeFileOut(debug bool) {
+func (f *File) writeFileOut() {
 	defer func() {
 		_ = f.file.Close()
 		_ = f.conn.Close()
@@ -75,14 +75,14 @@ func (f *File) writeFileOut(debug bool) {
 	for {
 		br, err = f.conn.Read(buff)
 		if err != nil {
-			if debug {
+			if conf.Debug {
 				log.Error(err)
 			}
 			return
 		}
 		_, err = f.file.Write(buff[:br])
 		if err != nil {
-			if debug {
+			if conf.Debug {
 				log.Error(err)
 			}
 			return

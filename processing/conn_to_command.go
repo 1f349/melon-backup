@@ -19,14 +19,14 @@ type ConnToCommand struct {
 	endChan     chan struct{}
 }
 
-func NewConnToCommandTask(conn io.ReadWriteCloser, keepAlive bool, name string, cmd *exec.Cmd, cnf conf.ConfigYAML, debug bool) *ConnToCommand {
+func NewConnToCommandTask(conn io.ReadWriteCloser, keepAlive bool, name string, cmd *exec.Cmd, cnf conf.ConfigYAML) *ConnToCommand {
 	if cmd == nil {
 		log.Error("No command!")
 		return nil
 	}
 	var err error
 	var stderr io.ReadCloser
-	if debug {
+	if conf.Debug {
 		stderr, err = cmd.StderrPipe()
 		if err != nil {
 			log.Error(err)
@@ -35,21 +35,21 @@ func NewConnToCommandTask(conn io.ReadWriteCloser, keepAlive bool, name string, 
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		if debug {
+		if conf.Debug {
 			log.Error(err)
 		}
 		return nil
 	}
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		if debug {
+		if conf.Debug {
 			log.Error(err)
 		}
 		return nil
 	}
 	err = cmd.Start()
 	if err != nil {
-		if debug {
+		if conf.Debug {
 			log.Error(err)
 		}
 		return nil
@@ -65,22 +65,22 @@ func NewConnToCommandTask(conn io.ReadWriteCloser, keepAlive bool, name string, 
 		endChan:     make(chan struct{}),
 	}
 	log.Info(name + " Operation Started!")
-	if debug {
+	if conf.Debug {
 		go commToCmd.readSTDErr()
 	}
-	go commToCmd.writeSTDIn(debug)
-	go commToCmd.readSTDOut(debug)
+	go commToCmd.writeSTDIn()
+	go commToCmd.readSTDOut()
 	if keepAlive && cnf.Net.KeepAliveTime > time.Millisecond {
 		go commToCmd.sendKeepAlives()
 	}
 	return commToCmd
 }
 
-func (t *ConnToCommand) WaitOnCompletion(debug bool) {
+func (t *ConnToCommand) WaitOnCompletion() {
 	<-t.endChan
 	err := t.cmd.Wait()
 	if err != nil {
-		if debug {
+		if conf.Debug {
 			log.Error(err)
 		}
 		return
@@ -109,17 +109,11 @@ func (t *ConnToCommand) sendKeepAlives() {
 	}
 }
 
-func (t ConnToCommand) writeSTDIn(debug bool) {
+func (t ConnToCommand) writeSTDIn() {
 	defer func() {
 		_ = t.pipeIn.Close()
 		_ = t.conn.Close()
 		close(t.endChan)
-		//if t.cmd.ProcessState == nil {
-		//	err := t.cmd.Process.Kill()
-		//	if err != nil && debug {
-		//		log.Error(err)
-		//	}
-		//}
 	}()
 	buff := make([]byte, t.cnf.GetTarBufferSize())
 	var br int
@@ -127,14 +121,14 @@ func (t ConnToCommand) writeSTDIn(debug bool) {
 	for t.cmd.ProcessState == nil {
 		br, err = t.conn.Read(buff)
 		if err != nil {
-			if debug {
+			if conf.Debug {
 				log.Error(err)
 			}
 			return
 		}
 		_, err = t.pipeIn.Write(buff[:br])
 		if err != nil {
-			if debug {
+			if conf.Debug {
 				log.Error(err)
 			}
 			return
@@ -165,11 +159,11 @@ func (t *ConnToCommand) readSTDErr() {
 	}
 }
 
-func (t *ConnToCommand) readSTDOut(debug bool) {
+func (t *ConnToCommand) readSTDOut() {
 	defer func() {
 		bts, err := io.ReadAll(t.pipeOut)
 		if err != nil {
-			if debug {
+			if conf.Debug {
 				log.Error(err)
 			}
 			return
@@ -182,7 +176,7 @@ func (t *ConnToCommand) readSTDOut(debug bool) {
 	for t.cmd.ProcessState == nil {
 		br, err = t.pipeOut.Read(buff)
 		if err != nil {
-			if debug {
+			if conf.Debug {
 				log.Error(err)
 			}
 			return

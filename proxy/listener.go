@@ -11,7 +11,6 @@ import (
 
 type Listener struct {
 	conf               conf.ConfigYAML
-	debug              bool
 	active             bool
 	conn               *comm.Client
 	lstn               net.Listener
@@ -24,14 +23,13 @@ type Listener struct {
 	acceptConnChan     chan net.Conn
 }
 
-func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener, error) {
+func NewListener(conn *comm.Client, cnf conf.ConfigYAML) (*Listener, error) {
 	tl, err := net.Listen("tcp", cnf.Net.GetProxyLocalAddr()+":"+strconv.Itoa(int(cnf.Net.GetProxyLocalPort())))
 	if err != nil {
 		return nil, err
 	}
 	ls := &Listener{
 		conf:               cnf,
-		debug:              debug,
 		active:             true,
 		conn:               conn,
 		lstn:               tl,
@@ -48,13 +46,13 @@ func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener,
 		for ls.active {
 			cc, err := ls.lstn.Accept()
 			if err != nil {
-				if debug {
+				if conf.Debug {
 					log.Error(err)
 				}
 				ls.Close()
 				return
 			}
-			if debug {
+			if conf.Debug {
 				log.Error("Accepted Client, awaiting connection: " + cc.RemoteAddr().String())
 			}
 			select {
@@ -85,10 +83,10 @@ func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener,
 				case cID := <-ls.connectionIDChan:
 					if cID < 1 || ls.addClient(cc, cID) {
 						_ = cc.Close()
-						if debug {
+						if conf.Debug {
 							log.Error("Client not added!")
 						}
-					} else if debug {
+					} else if conf.Debug {
 						log.Error("Added Client: " + strconv.Itoa(cID))
 						ls.conn.SendPacket(&comm.Packet{Type: comm.ConnectionSendStartRequest, ConnectionID: cID})
 					}
@@ -115,7 +113,7 @@ func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener,
 					return
 				case ls.connectionIDChan <- 0:
 				default:
-					if debug {
+					if conf.Debug {
 						log.Error("unexpected packet : ConnectionReset")
 					}
 				}
@@ -125,7 +123,7 @@ func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener,
 					return
 				case ls.connectionIDChan <- p.ConnectionID:
 				default:
-					if debug {
+					if conf.Debug {
 						log.Error("unexpected packet : ConnectionStarted")
 					}
 					ls.conn.SendPacket(&comm.Packet{Type: comm.ConnectionClosed, ConnectionID: p.ConnectionID})
@@ -157,7 +155,7 @@ func (l *Listener) addClient(c net.Conn, id int) bool {
 		if _, exs := l.connections[id]; exs {
 			return true
 		}
-		nCl := newClient(l.conn, id, c, l.conf.Net.GetProxyBufferSize(), l.debug)
+		nCl := newClient(l.conn, id, c, l.conf.Net.GetProxyBufferSize())
 		nCl.StartSend()
 		l.connections[id] = nCl
 		go func() {

@@ -13,14 +13,14 @@ type RsyncIngester struct {
 	lstnr *proxy.Multiplexer
 }
 
-func NewRsyncIngester(cnf conf.ConfigYAML, conn *comm.Client, debug bool) *RsyncIngester {
+func NewRsyncIngester(cnf conf.ConfigYAML, conn *comm.Client) *RsyncIngester {
 	if cnf.Services.ManageRSync {
 		log.Info("Starting rsync service...")
 		cmd := utils.CreateCmd(append(cnf.Services.StartCommand, "rsync.service"))
 		if cmd != nil {
 			err := cmd.Run()
 			if err != nil {
-				if debug {
+				if conf.Debug {
 					log.Error(err)
 				}
 				return nil
@@ -30,10 +30,10 @@ func NewRsyncIngester(cnf conf.ConfigYAML, conn *comm.Client, debug bool) *Rsync
 			log.Error("No command!")
 		}
 	}
-	return &RsyncIngester{cnf: cnf, lstnr: proxy.NewMultiplexer(conn, cnf, debug)}
+	return &RsyncIngester{cnf: cnf, lstnr: proxy.NewMultiplexer(conn, cnf)}
 }
 
-func (r *RsyncIngester) Wait(debug bool) {
+func (r *RsyncIngester) Wait() {
 	log.Info("Ingestion Started!")
 	<-r.lstnr.GetCloseWaiter()
 	log.Info("Ingestion Finished!")
@@ -43,7 +43,7 @@ func (r *RsyncIngester) Wait(debug bool) {
 		if cmd != nil {
 			err := cmd.Run()
 			if err != nil {
-				if debug {
+				if conf.Debug {
 					log.Error(err)
 				}
 			}

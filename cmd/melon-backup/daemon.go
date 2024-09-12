@@ -63,7 +63,7 @@ func (d *daemonCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}
 		return subcommands.ExitFailure
 	}
 
-	rv := processing.Start(cnf, d.debug)
+	rv := processing.Start(cnf)
 
 	if rv != 0 {
 		return subcommands.ExitStatus(rv + 10)

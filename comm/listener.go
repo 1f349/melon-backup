@@ -12,11 +12,10 @@ import (
 type Listener struct {
 	lstn   net.Listener
 	conf   conf.ConfigYAML
-	debug  bool
 	active bool
 }
 
-func NewListener(conf conf.ConfigYAML, debug bool) (*Listener, error) {
+func NewListener(conf conf.ConfigYAML) (*Listener, error) {
 	crt := conf.Security.GetCert()
 	if crt == nil {
 		return nil, errors.New("no certificate")
@@ -40,7 +39,6 @@ func NewListener(conf conf.ConfigYAML, debug bool) (*Listener, error) {
 	return &Listener{
 		lstn:   lstn,
 		conf:   conf,
-		debug:  debug,
 		active: true,
 	}, nil
 }
@@ -51,7 +49,7 @@ func (l *Listener) Accept() (*Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		return newClient(l.conf, cc, l.debug)
+		return newClient(l.conf, cc)
 	}
 	return nil, errors.New("listener closed")
 }

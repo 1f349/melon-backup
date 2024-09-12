@@ -19,7 +19,7 @@ type Client struct {
 	active          bool
 }
 
-func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32, debug bool) *Client {
+func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32) *Client {
 	cl := &Client{
 		conn:            conn,
 		conID:           conID,
@@ -53,13 +53,13 @@ func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32, 
 			default:
 				br, err := cl.connTCP.Read(buff)
 				if err != nil {
-					if debug {
+					if conf.Debug {
 						log.Error(err)
 					}
 					cl.close(true)
 					return
 				}
-				if debug {
+				if conf.Debug {
 					log.Error("DBG : TCP (" + strconv.Itoa(br) + ")-> COM : " + strconv.Itoa(cl.conID))
 				}
 				p := &comm.Packet{
@@ -82,12 +82,12 @@ func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32, 
 					cl.close(false)
 					return
 				}
-				if debug {
+				if conf.Debug {
 					log.Error("DBG : TCP <-(" + strconv.Itoa(len(p.Data)) + ") COM : " + strconv.Itoa(cl.conID))
 				}
 				_, err := cl.connTCP.Write(p.Data)
 				if err != nil {
-					if debug {
+					if conf.Debug {
 						log.Error(err)
 					}
 					cl.close(true)

@@ -7,13 +7,13 @@ import (
 	"slices"
 )
 
-func ReloadServices(cnf conf.ConfigYAML, debug bool) {
+func ReloadServices(cnf conf.ConfigYAML) {
 	if cnf.GetMode() != conf.Store && cnf.GetMode() != conf.UnStore && len(cnf.Services.ReloadCommand) > 0 {
 		log.Info("Reloading Services...")
 		cmdRl := utils.CreateCmd(cnf.Services.ReloadCommand)
 		err := cmdRl.Run()
 		if err != nil {
-			if debug {
+			if conf.Debug {
 				log.Error(err)
 			}
 			return
@@ -21,8 +21,8 @@ func ReloadServices(cnf conf.ConfigYAML, debug bool) {
 	}
 }
 
-func StartServices(cnf conf.ConfigYAML, previouslyStopped []string, sent []string, debug bool) {
-	ReloadServices(cnf, debug)
+func StartServices(cnf conf.ConfigYAML, previouslyStopped []string, sent []string) {
+	ReloadServices(cnf)
 	if cnf.GetMode() != conf.Store && cnf.GetMode() != conf.UnStore && len(cnf.Services.StartCommand) > 0 {
 		if cnf.Services.Restore {
 			var toRestore []string
@@ -40,7 +40,7 @@ func StartServices(cnf conf.ConfigYAML, previouslyStopped []string, sent []strin
 				err := cmd.Run()
 				if err != nil {
 					log.Info("Failed to start: " + n)
-					if debug {
+					if conf.Debug {
 						log.Error(err)
 					}
 				}
@@ -58,7 +58,7 @@ func StartServices(cnf conf.ConfigYAML, previouslyStopped []string, sent []strin
 				err := cmd.Run()
 				if err != nil {
 					log.Info("Failed to start: " + n)
-					if debug {
+					if conf.Debug {
 						log.Error(err)
 					}
 				}

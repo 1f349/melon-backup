@@ -15,10 +15,10 @@ type RsyncSender struct {
 	cmd   *exec.Cmd
 }
 
-func NewRsyncSender(cnf conf.ConfigYAML, conn *comm.Client, debug bool) *RsyncSender {
-	lstnr, err := proxy.NewListener(conn, cnf, debug)
+func NewRsyncSender(cnf conf.ConfigYAML, conn *comm.Client) *RsyncSender {
+	lstnr, err := proxy.NewListener(conn, cnf)
 	if err != nil {
-		if debug {
+		if conf.Debug {
 			log.Error(err)
 		}
 		return nil
@@ -27,7 +27,7 @@ func NewRsyncSender(cnf conf.ConfigYAML, conn *comm.Client, debug bool) *RsyncSe
 	return &RsyncSender{cnf: cnf, lstnr: lstnr, cmd: utils.CreateCmd(cnf.RSyncCommand, "RSYNC_PASSWORD="+cnf.Security.RSyncPassword)}
 }
 
-func (s *RsyncSender) StartAndWait(debug bool) {
+func (s *RsyncSender) StartAndWait() {
 	log.Info("RSync Started...")
 	defer func() {
 		s.lstnr.Close()
@@ -39,7 +39,7 @@ func (s *RsyncSender) StartAndWait(debug bool) {
 	}
 	bts, err := s.cmd.CombinedOutput()
 	if err != nil {
-		if debug {
+		if conf.Debug {
 			log.Error(err)
 		}
 	}

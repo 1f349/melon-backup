@@ -14,10 +14,10 @@ type UnFile struct {
 	endChan chan struct{}
 }
 
-func NewUnFileTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *UnFile {
+func NewUnFileTask(conn net.Conn, cnf conf.ConfigYAML) *UnFile {
 	flp, err := os.Open(cnf.GetStoreFile())
 	if err != nil {
-		if debug {
+		if conf.Debug {
 			log.Error(err)
 		}
 		return nil
@@ -29,7 +29,7 @@ func NewUnFileTask(conn net.Conn, cnf conf.ConfigYAML, debug bool) *UnFile {
 		endChan: make(chan struct{}),
 	}
 	log.Info("Started Reading from file: " + cnf.GetStoreFile())
-	go fl.readFileIn(debug)
+	go fl.readFileIn()
 	go fl.eatAllKeepAlives()
 	return fl
 }
@@ -50,7 +50,7 @@ func (t *UnFile) eatAllKeepAlives() {
 	}
 }
 
-func (f *UnFile) readFileIn(debug bool) {
+func (f *UnFile) readFileIn() {
 	defer func() {
 		_ = f.file.Close()
 		_ = f.conn.Close()
@@ -62,14 +62,14 @@ func (f *UnFile) readFileIn(debug bool) {
 	for {
 		br, err = f.file.Read(buff)
 		if err != nil {
-			if debug {
+			if conf.Debug {
 				log.Error(err)
 			}
 			return
 		}
 		_, err = f.conn.Write(buff[:br])
 		if err != nil {
-			if debug {
+			if conf.Debug {
 				log.Error(err)
 			}
 			return
