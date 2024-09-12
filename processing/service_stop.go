@@ -21,7 +21,7 @@ func StopServices(cnf conf.ConfigYAML) []string {
 					log.Error(err)
 				}
 			} else {
-				toRet = append(toRet, n)
+				toRet = append([]string{n}, toRet...)
 			}
 		}
 		log.Info("Service Stop Task Completed!")
