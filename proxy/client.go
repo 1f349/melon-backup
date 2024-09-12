@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"encoding/base64"
 	"github.com/1f349/melon-backup/comm"
 	"github.com/1f349/melon-backup/conf"
 	"github.com/1f349/melon-backup/utils"
@@ -62,7 +61,6 @@ func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32, 
 				}
 				if debug {
 					log.Error("DBG : TCP (" + strconv.Itoa(br) + ")-> COM : " + strconv.Itoa(cl.conID))
-					log.Error("DBG : " + strconv.Itoa(cl.conID) + ": -> : " + base64.StdEncoding.EncodeToString(buff[:br]))
 				}
 				p := &comm.Packet{
 					Type:         comm.ConnectionData,
@@ -86,7 +84,6 @@ func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32, 
 				}
 				if debug {
 					log.Error("DBG : TCP <-(" + strconv.Itoa(len(p.Data)) + ") COM : " + strconv.Itoa(cl.conID))
-					log.Error("DBG : " + strconv.Itoa(cl.conID) + ": <- : " + base64.StdEncoding.EncodeToString(p.Data))
 				}
 				_, err := cl.connTCP.Write(p.Data)
 				if err != nil {
