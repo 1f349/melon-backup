@@ -108,9 +108,6 @@ func NewListener(conn *comm.Client, cnf conf.ConfigYAML, debug bool) (*Listener,
 			if p == nil {
 				return
 			}
-			if debug {
-				log.Error("DBG : COMM_RCV : " + strconv.Itoa(int(p.Type)) + " : [" + strconv.Itoa(p.ConnectionID) + "]")
-			}
 			switch p.Type {
 			case comm.ConnectionReset:
 				select {

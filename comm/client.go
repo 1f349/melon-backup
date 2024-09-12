@@ -198,6 +198,9 @@ func (c *Client) SendPacket(p *Packet) {
 		}
 		select {
 		case c.sendChan <- p:
+			if conf.Debug {
+				log.Error("DBG : COMM_SND : " + strconv.Itoa(int(p.Type)) + " : [" + strconv.Itoa(p.ConnectionID) + "]")
+			}
 		case <-c.closeChan:
 		}
 	}
@@ -209,6 +212,9 @@ func (c *Client) ReceivePacket() *Packet {
 	}
 	select {
 	case p := <-c.recvChan:
+		if conf.Debug {
+			log.Error("DBG : COMM_RCV : " + strconv.Itoa(int(p.Type)) + " : [" + strconv.Itoa(p.ConnectionID) + "]")
+		}
 		return p
 	case <-c.closeChan:
 	}
