@@ -10,12 +10,12 @@ type ServiceList struct {
 }
 
 func (s *ServiceList) WriteTo(w io.Writer) (n int64, err error) {
-	bw, err := utils.WriteCompressedInt(len(s.List), w)
+	bw, err := utils.WriteIntAsBytes(len(s.List), w)
 	if err != nil {
 		return int64(bw), err
 	}
 	for _, v := range s.List {
-		cbw, err := utils.WriteCompressedInt(len(v), w)
+		cbw, err := utils.WriteIntAsBytes(len(v), w)
 		bw += cbw
 		if err != nil {
 			return int64(bw), err
@@ -30,13 +30,13 @@ func (s *ServiceList) WriteTo(w io.Writer) (n int64, err error) {
 }
 
 func (s *ServiceList) ReadFrom(r io.Reader) (n int64, err error) {
-	br, err, sz := utils.ReadCompressedInt(r)
+	br, err, sz := utils.ReadIntFromBytes(r)
 	if err != nil {
 		return int64(br), err
 	}
 	s.List = make([]string, sz)
 	for i := 0; i < sz; i++ {
-		cbr, err, csz := utils.ReadCompressedInt(r)
+		cbr, err, csz := utils.ReadIntFromBytes(r)
 		br += cbr
 		if err != nil {
 			return int64(br), err

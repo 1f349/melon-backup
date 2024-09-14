@@ -3,9 +3,12 @@ package utils
 import (
 	"errors"
 	"io"
+	"math"
 )
 
-func WriteCompressedInt(i int, writer io.Writer) (n int, err error) {
+var overflowError = errors.New("overflow")
+
+func WriteIntAsBytes(i int, writer io.Writer) (n int, err error) {
 	if i < 0 {
 		return 0, errors.New("negative int")
 	} else if i == 0 {
@@ -14,13 +17,10 @@ func WriteCompressedInt(i int, writer io.Writer) (n int, err error) {
 	}
 	bw := 0
 	currentI := i
-	var nextI int
-	var currentMask int
 	for currentI > 0 {
-		nextI = currentI >> 7
-		currentMask = nextI << 7
-		var bt = byte(currentI - currentMask)
-		if nextI > 0 {
+		var bt = byte(currentI & 127)
+		currentI = currentI >> 7
+		if currentI > 0 {
 			bt |= 128
 		}
 		cbw, err := writer.Write([]byte{bt})
@@ -28,35 +28,29 @@ func WriteCompressedInt(i int, writer io.Writer) (n int, err error) {
 		if err != nil {
 			return bw, err
 		}
-		currentI = nextI
 	}
 	return bw, nil
 }
 
-func ReadCompressedInt(r io.Reader) (n int, err error, val int) {
+func ReadIntFromBytes(r io.Reader) (n int, err error, val int) {
 	cBuff := make([]byte, 1)
-	br, err := io.ReadFull(r, cBuff)
-	if err != nil {
-		return br, err, 0
-	} else if cBuff[0] == 0 {
-		return br, nil, 0
-	}
-	moreBytes := true
 	valToRet := 0
 	cBitSize := 0
 	cbr := 0
-	for moreBytes {
-		moreBytes = (cBuff[0] & 128) != 0
-		cBuff[0] &^= 128
-		valToRet += int(uint64(cBuff[0]) << cBitSize)
-		if moreBytes {
-			cBitSize += 7
-			cbr, err = io.ReadFull(r, cBuff)
-			br += cbr
-			if err != nil {
-				return br, err, valToRet
-			}
+	for valToRet < math.MaxInt {
+		br, err := io.ReadFull(r, cBuff)
+		cbr += br
+		if err != nil {
+			return cbr, err, valToRet
 		}
+		if cBuff[0] < 128 {
+			if math.MaxInt-valToRet < int(cBuff[0]) {
+				return cbr, overflowError, math.MaxInt
+			}
+			return cbr, nil, valToRet + int(int(cBuff[0])<<cBitSize)
+		}
+		valToRet += int(cBuff[0]&127) << cBitSize
+		cBitSize += 7
 	}
-	return br, nil, valToRet
+	return cbr, overflowError, valToRet
 }

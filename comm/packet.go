@@ -31,13 +31,13 @@ func (p *Packet) WriteTo(w io.Writer) (n int64, err error) {
 		return int64(bw), errors.New("invalid packet type")
 	}
 	if p.Type != ConnectionStartRequest && p.Type != ConnectionReset && p.Type != ConnectionKeepAlive {
-		cbw, err := utils.WriteCompressedInt(p.ConnectionID, w)
+		cbw, err := utils.WriteIntAsBytes(p.ConnectionID, w)
 		bw += cbw
 		if err != nil {
 			return int64(bw), err
 		}
 		if p.Type == ConnectionData {
-			cbw, err := utils.WriteCompressedInt(len(p.Data), w)
+			cbw, err := utils.WriteIntAsBytes(len(p.Data), w)
 			bw += cbw
 			if err != nil {
 				return int64(bw), err
@@ -64,13 +64,13 @@ func (p *Packet) ReadFrom(r io.Reader) (n int64, err error) {
 	}
 	if p.Type != ConnectionStartRequest && p.Type != ConnectionReset && p.Type != ConnectionKeepAlive {
 		var cbr int
-		cbr, err, p.ConnectionID = utils.ReadCompressedInt(r)
+		cbr, err, p.ConnectionID = utils.ReadIntFromBytes(r)
 		br += cbr
 		if err != nil {
 			return int64(br), err
 		}
 		if p.Type == ConnectionData {
-			cbr, err, sz := utils.ReadCompressedInt(r)
+			cbr, err, sz := utils.ReadIntFromBytes(r)
 			br += cbr
 			if err != nil {
 				return int64(br), err
