@@ -3,6 +3,7 @@ package processing
 import (
 	"github.com/1f349/melon-backup/conf"
 	"github.com/charmbracelet/log"
+	"io"
 	"net"
 	"os"
 )
@@ -57,22 +58,8 @@ func (f *UnFile) readFileIn() {
 		close(f.endChan)
 	}()
 	buff := make([]byte, f.cnf.GetTarBufferSize())
-	var br int
-	var err error
-	for {
-		br, err = f.file.Read(buff)
-		if err != nil {
-			if conf.Debug {
-				log.Error(err)
-			}
-			return
-		}
-		_, err = f.conn.Write(buff[:br])
-		if err != nil {
-			if conf.Debug {
-				log.Error(err)
-			}
-			return
-		}
+	_, err := io.CopyBuffer(f.conn, f.file, buff)
+	if err != nil && conf.Debug {
+		log.Error(err)
 	}
 }
