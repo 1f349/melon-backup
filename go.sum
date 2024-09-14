@@ -1,3 +1,7 @@
+github.com/1f349/int-byte-utils v1.0.0 h1:Xlnvzv9PuSKPG86p92/vKDaJm0cYOnSb+TdUI1Bjpk4=
+github.com/1f349/int-byte-utils v1.0.0/go.mod h1:u/Nn7FWbQV8lgcPbB1VsMvCef1HwQH5jYvoVFb9v8kY=
+github.com/1f349/queue v1.0.0 h1:E+cAsxKAmQ7gJzKy+EWLlewWPh2ZckFRn+F1W58RI+o=
+github.com/1f349/queue v1.0.0/go.mod h1:Xx6rLHILdR2v1cY1yLB4HN9aFwyuc+XvBubtHtFToAE=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
 github.com/charmbracelet/lipgloss v0.10.0 h1:KWeXFSexGcfahHX+54URiZGkBFazf70JNMtwg/AFW3s=

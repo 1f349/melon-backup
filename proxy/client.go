@@ -3,7 +3,7 @@ package proxy
 import (
 	"github.com/1f349/melon-backup/comm"
 	"github.com/1f349/melon-backup/conf"
-	"github.com/1f349/melon-backup/utils"
+	"github.com/1f349/queue"
 	"github.com/charmbracelet/log"
 	"net"
 	"strconv"
@@ -13,7 +13,7 @@ type Client struct {
 	conn            *comm.Client
 	conID           int
 	connTCP         net.Conn
-	packetQueue     *utils.Queue[*comm.Packet]
+	packetQueue     *queue.Queue[*comm.Packet]
 	closeChan       chan struct{}
 	notifySendStart chan bool
 	active          bool
@@ -27,7 +27,7 @@ func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32) 
 		closeChan:       make(chan struct{}),
 		active:          true,
 		notifySendStart: make(chan bool),
-		packetQueue:     utils.NewQueue[*comm.Packet](),
+		packetQueue:     queue.NewQueue[*comm.Packet](),
 	}
 	go func() {
 		defer func() {
