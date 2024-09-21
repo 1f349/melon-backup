@@ -3,7 +3,6 @@ module github.com/1f349/melon-backup
 go 1.22
 
 require (
-	github.com/1f349/int-byte-utils v1.0.0
 	github.com/1f349/queue v1.0.0
 	github.com/charmbracelet/log v0.4.0
 	github.com/google/subcommands v1.2.0

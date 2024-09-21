@@ -2,7 +2,7 @@ package comm
 
 import (
 	"errors"
-	int_byte_utils "github.com/1f349/int-byte-utils"
+	"github.com/1f349/melon-backup/utils"
 	"io"
 )
 
@@ -17,7 +17,7 @@ func (p *IngesterPacket) WriteTo(w io.Writer) (n int64, err error) {
 	if err != nil {
 		return int64(bw), err
 	}
-	cbw, err := int_byte_utils.WriteIntAsBytes(p.Mode, w)
+	cbw, err := utils.WriteIntAsBytes(p.Mode, w)
 	bw += cbw
 	return int64(bw), err
 }
@@ -32,7 +32,7 @@ func (p *IngesterPacket) ReadFrom(r io.Reader) (n int64, err error) {
 		return int64(br), errors.New("invalid packet type")
 	}
 	var cbr int
-	cbr, err, p.Mode = int_byte_utils.ReadIntFromBytes(r)
+	cbr, err, p.Mode = utils.ReadIntFromBytes(r)
 	br += cbr
 	return int64(br), err
 }
