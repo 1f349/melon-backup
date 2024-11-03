@@ -31,13 +31,13 @@ func (p *Packet) WriteTo(w io.Writer) (n int64, err error) {
 		return int64(bw), errors.New("invalid packet type")
 	}
 	if p.Type != ConnectionStartRequest && p.Type != ConnectionReset && p.Type != ConnectionKeepAlive {
-		cbw, err := utils.WriteIntAsBytes(p.ConnectionID, w)
+		cbw, err := utils.WriteVarInt(w, p.ConnectionID)
 		bw += cbw
 		if err != nil {
 			return int64(bw), err
 		}
 		if p.Type == ConnectionData {
-			cbw, err := utils.WriteIntAsBytes(len(p.Data), w)
+			cbw, err := utils.WriteVarInt(w, len(p.Data))
 			bw += cbw
 			if err != nil {
 				return int64(bw), err
@@ -52,36 +52,31 @@ func (p *Packet) WriteTo(w io.Writer) (n int64, err error) {
 	return int64(bw), nil
 }
 
-func (p *Packet) ReadFrom(r io.Reader) (n int64, err error) {
-	tbuff := make([]byte, 1)
-	br, err := io.ReadFull(r, tbuff)
+func (p *Packet) ReadFrom(r utils.BufReader) (err error) {
+	br, err := r.ReadByte()
 	if err != nil {
-		return int64(br), err
+		return err
 	}
-	p.Type = PacketType(tbuff[0])
+	p.Type = PacketType(br)
 	if p.Type == Ingester || p.Type == Sender {
-		return int64(br), errors.New("invalid packet type")
+		return errors.New("invalid packet type")
 	}
 	if p.Type != ConnectionStartRequest && p.Type != ConnectionReset && p.Type != ConnectionKeepAlive {
-		var cbr int
-		cbr, err, p.ConnectionID = utils.ReadIntFromBytes(r)
-		br += cbr
+		p.ConnectionID, err = utils.ReadVarInt(r)
 		if err != nil {
-			return int64(br), err
+			return err
 		}
 		if p.Type == ConnectionData {
-			cbr, err, sz := utils.ReadIntFromBytes(r)
-			br += cbr
+			sz, err := utils.ReadVarInt(r)
 			if err != nil {
-				return int64(br), err
+				return err
 			}
 			p.Data = make([]byte, sz)
-			cbr, err = io.ReadFull(r, p.Data)
-			br += cbr
+			_, err = io.ReadFull(r, p.Data)
 			if err != nil {
-				return int64(br), err
+				return err
 			}
 		}
 	}
-	return int64(br), err
+	return err
 }

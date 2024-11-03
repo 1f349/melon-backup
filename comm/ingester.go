@@ -17,22 +17,19 @@ func (p *IngesterPacket) WriteTo(w io.Writer) (n int64, err error) {
 	if err != nil {
 		return int64(bw), err
 	}
-	cbw, err := utils.WriteIntAsBytes(p.Mode, w)
+	cbw, err := utils.WriteVarInt(w, p.Mode)
 	bw += cbw
 	return int64(bw), err
 }
 
-func (p *IngesterPacket) ReadFrom(r io.Reader) (n int64, err error) {
-	tbuff := make([]byte, 1)
-	br, err := io.ReadFull(r, tbuff)
+func (p *IngesterPacket) ReadFrom(r io.ByteReader) (err error) {
+	br, err := r.ReadByte()
 	if err != nil {
-		return int64(br), err
+		return err
 	}
-	if tbuff[0] != byte(Ingester) {
-		return int64(br), errors.New("invalid packet type")
+	if br != byte(Ingester) {
+		return errors.New("invalid packet type")
 	}
-	var cbr int
-	cbr, err, p.Mode = utils.ReadIntFromBytes(r)
-	br += cbr
-	return int64(br), err
+	p.Mode, err = utils.ReadVarInt(r)
+	return err
 }
