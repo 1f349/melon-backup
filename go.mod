@@ -3,13 +3,14 @@ module github.com/1f349/melon-backup
 go 1.22
 
 require (
-	github.com/1f349/queue v1.0.0
+	github.com/1f349/queue v1.0.1
 	github.com/charmbracelet/log v0.4.0
 	github.com/google/subcommands v1.2.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
+	github.com/1f349/int-byte-utils v1.3.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v0.10.0 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect

@@ -2,7 +2,7 @@ package comm
 
 import (
 	"errors"
-	"github.com/1f349/melon-backup/utils"
+	int_byte_utils "github.com/1f349/int-byte-utils"
 	"io"
 )
 
@@ -31,13 +31,13 @@ func (p *Packet) WriteTo(w io.Writer) (n int64, err error) {
 		return int64(bw), errors.New("invalid packet type")
 	}
 	if p.Type != ConnectionStartRequest && p.Type != ConnectionReset && p.Type != ConnectionKeepAlive {
-		cbw, err := utils.WriteIntAsBytes(p.ConnectionID, w)
+		cbw, err := int_byte_utils.WriteIntAsBytes(p.ConnectionID, w)
 		bw += cbw
 		if err != nil {
 			return int64(bw), err
 		}
 		if p.Type == ConnectionData {
-			cbw, err := utils.WriteIntAsBytes(len(p.Data), w)
+			cbw, err := int_byte_utils.WriteIntAsBytes(len(p.Data), w)
 			bw += cbw
 			if err != nil {
 				return int64(bw), err
@@ -64,13 +64,13 @@ func (p *Packet) ReadFrom(r io.Reader) (n int64, err error) {
 	}
 	if p.Type != ConnectionStartRequest && p.Type != ConnectionReset && p.Type != ConnectionKeepAlive {
 		var cbr int
-		cbr, err, p.ConnectionID = utils.ReadIntFromBytes(r)
+		cbr, err, p.ConnectionID = int_byte_utils.ReadIntFromBytes(r)
 		br += cbr
 		if err != nil {
 			return int64(br), err
 		}
 		if p.Type == ConnectionData {
-			cbr, err, sz := utils.ReadIntFromBytes(r)
+			cbr, err, sz := int_byte_utils.ReadIntFromBytes(r)
 			br += cbr
 			if err != nil {
 				return int64(br), err
