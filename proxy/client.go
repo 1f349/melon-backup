@@ -13,7 +13,7 @@ type Client struct {
 	conn            *comm.Client
 	conID           int
 	connTCP         net.Conn
-	packetQueue     *queue.Queue[*comm.Packet]
+	packetQueue     queue.Queue[*comm.Packet]
 	closeChan       chan struct{}
 	notifySendStart chan bool
 	active          bool
@@ -27,7 +27,7 @@ func newClient(conn *comm.Client, conID int, connTCP net.Conn, buffSize uint32) 
 		closeChan:       make(chan struct{}),
 		active:          true,
 		notifySendStart: make(chan bool),
-		packetQueue:     queue.NewQueue[*comm.Packet](),
+		packetQueue:     queue.NewFastQueue[*comm.Packet](),
 	}
 	go func() {
 		defer func() {

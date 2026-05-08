@@ -1,7 +1,7 @@
 github.com/1f349/int-byte-utils v1.3.0 h1:6kjtSO4/FnhKaNx0p8FlDwwIXt/PUqk2aAQKlwEC02Q=
 github.com/1f349/int-byte-utils v1.3.0/go.mod h1:8tL9j+ICX4q9Nog0a6pcJQiN5ACF5VCGhq72ZoXnei4=
-github.com/1f349/queue v1.0.1 h1:saXNIW8sirPUS6PBAQhtREFsVwrk9E9+rBh834mvi44=
-github.com/1f349/queue v1.0.1/go.mod h1:Xx6rLHILdR2v1cY1yLB4HN9aFwyuc+XvBubtHtFToAE=
+github.com/1f349/queue v1.1.0 h1:7wFG+FvHoV6DjmHTriZIVTfrzeOO31UIKsnqaBVc5oA=
+github.com/1f349/queue v1.1.0/go.mod h1:QUm8pnP1L05QdBAVzafPTViTlHHQl7NVz6jxtgOglbw=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
 github.com/charmbracelet/lipgloss v0.10.0 h1:KWeXFSexGcfahHX+54URiZGkBFazf70JNMtwg/AFW3s=
@@ -31,8 +31,8 @@ github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJ
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
 github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
-github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
-github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
+github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 golang.org/x/exp v0.0.0-20231006140011-7918f672742d h1:jtJma62tbqLibJ5sFQz8bKtEM8rJBtfilJ2qTU199MI=
 golang.org/x/exp v0.0.0-20231006140011-7918f672742d/go.mod h1:ldy0pHrwJyGW56pPQzzkH36rKxoZW1tw7ZJpeKx+hdo=
 golang.org/x/sys v0.6.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
