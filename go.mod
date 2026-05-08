@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/1f349/int-byte-utils v1.3.0
-	github.com/1f349/queue v1.1.0
+	github.com/1f349/queue v1.1.1
 	github.com/charmbracelet/log v0.4.0
 	github.com/google/subcommands v1.2.0
 	gopkg.in/yaml.v3 v3.0.1
