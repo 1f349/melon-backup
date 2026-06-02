@@ -26,11 +26,14 @@ func NewListener(conf conf.ConfigYAML) (*Listener, error) {
 		ClientCAs:    conf.Security.GetCertPool(),
 		VerifyConnection: func(cs tls.ConnectionState) error {
 			for _, nom := range conf.Net.RemoteAllowedNames {
+				if cs.PeerCertificates[0].Subject.CommonName == nom {
+					return nil
+				}
 				if err := cs.PeerCertificates[0].VerifyHostname(nom); err == nil {
 					return nil
 				}
 			}
-			return errors.New("Failed Remote Name Verification : " + strings.Join(cs.PeerCertificates[0].DNSNames, " "))
+			return errors.New("Failed Remote Name Verification : " + strings.Join(cs.PeerCertificates[0].DNSNames, " ") + " : " + cs.PeerCertificates[0].Subject.CommonName)
 		},
 	})
 	if err != nil {
