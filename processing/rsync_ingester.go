@@ -16,7 +16,7 @@ type RsyncIngester struct {
 func NewRsyncIngester(cnf conf.ConfigYAML, conn *comm.Client) *RsyncIngester {
 	if cnf.Services.ManageRSync {
 		log.Info("Starting rsync service...")
-		cmd := utils.CreateCmd(append(cnf.Services.StartCommand, "rsync.service"))
+		cmd := utils.CreateCmd(append(cnf.Services.StartCommand, cnf.GetRSyncService()))
 		if cmd != nil {
 			err := cmd.Run()
 			if err != nil {
@@ -39,7 +39,7 @@ func (r *RsyncIngester) Wait() {
 	log.Info("Ingestion Finished!")
 	if r.cnf.Services.ManageRSync {
 		log.Info("Stopping rsync service...")
-		cmd := utils.CreateCmd(append(r.cnf.Services.StopCommand, "rsync.service"))
+		cmd := utils.CreateCmd(append(r.cnf.Services.StopCommand, r.cnf.GetRSyncService()))
 		if cmd != nil {
 			err := cmd.Run()
 			if err != nil {

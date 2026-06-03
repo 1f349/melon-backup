@@ -17,6 +17,7 @@ type ConfigYAML struct {
 	TarCommand        []string           `yaml:"tarCommand"`
 	UnTarCommand      []string           `yaml:"unTarCommand"`
 	TarBufferSize     uint32             `yaml:"tarBufferSize"`
+	RSyncService      string             `yaml:"rsyncService"`
 }
 
 func (c ConfigYAML) GetMode() Mode {
@@ -43,4 +44,11 @@ func (c ConfigYAML) GetTarBufferSize() uint32 {
 
 func (c ConfigYAML) GetStoreFile() string {
 	return getAbsPath(utils.GetCWD(), c.StoreFile)
+}
+
+func (c ConfigYAML) GetRSyncService() string {
+	if c.RSyncService == "" {
+		return "rsync.service"
+	}
+	return c.RSyncService
 }

@@ -55,6 +55,7 @@ func Generate(target io.Writer) {
 		TarCommand:    []string{"tar", "-zcvpSPf", "-", "--numeric-owner", "--acls", "--selinux", "--xattrs", "--xattrs-include=*", "--atime-preserve", "--one-file-system", "--exclude=/var/log/rsync.log", "--exclude=/var/run/rsyncd.pid", "--exclude=/var/run/rsync.lock", "--exclude=/dev", "--exclude=/sys", "--exclude=/proc", "--exclude=/etc/rsyncd.conf", "--exclude=/etc/rsyncd.secrets", "--exclude=/etc/melon-backup", "/"},
 		UnTarCommand:  []string{"tar", "-zxvpSUPf", "-", "--recursive-unlink", "--numeric-owner", "--same-owner", "--acls", "--selinux", "--xattrs", "--xattrs-include=*", "--atime-preserve", "--exclude=/var/log/rsync.log", "--exclude=/var/run/rsyncd.pid", "--exclude=/var/run/rsync.lock", "--exclude=/dev", "--exclude=/sys", "--exclude=/proc", "--exclude=/etc/rsyncd.conf", "--exclude=/etc/rsyncd.secrets", "--exclude=/etc/melon-backup", "-C", "/"},
 		TarBufferSize: 8192,
+		RSyncService:  "rsync.service",
 	}
 	err := cEnc.Encode(&cnf)
 	if err != nil {

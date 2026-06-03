@@ -23,6 +23,7 @@ func ReloadServices(cnf conf.ConfigYAML) {
 
 func StartServices(cnf conf.ConfigYAML, previouslyStopped []string, sent []string) {
 	ReloadServices(cnf)
+	slices.Reverse(sent)
 	if cnf.GetMode() != conf.Store && cnf.GetMode() != conf.UnStore && len(cnf.Services.StartCommand) > 0 {
 		if cnf.Services.Restore {
 			var toRestore []string
