@@ -15,6 +15,7 @@ func main() {
 	subcommands.Register(subcommands.CommandsCommand(), "")
 	subcommands.Register(&daemonCmd{}, "")
 	subcommands.Register(&generateCmd{}, "")
+	subcommands.Register(&editCmd{}, "")
 
 	flag.Parse()
 	ctx := context.Background()

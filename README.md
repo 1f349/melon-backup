@@ -24,7 +24,8 @@ Subcommands:
 	commands         list all command names
 	daemon           Run the daemon
 	flags            describe all known top-level flags
-	generate         Generate example config file
+	generate         Generate a config file
+	edit             Edit a config file
 	help             describe subcommands and their syntax
 ```
 
@@ -59,7 +60,7 @@ starting services uses the list from the opposite side to work out which service
 * stopCommand - command prefix to stop a service
 * startCommand - command prefix to start a service
 * statusCommand - command prefix to check a service state
-* rsyncService - manage the rsync service
+* manageRSync - manage the rsync service
 
 Net configuration:
 

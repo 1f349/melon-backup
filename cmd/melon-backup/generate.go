@@ -11,7 +11,7 @@ import (
 
 type generateCmd struct {
 	configPath string
-	debug      bool
+	example    bool
 }
 
 func (g *generateCmd) Name() string {
@@ -19,17 +19,18 @@ func (g *generateCmd) Name() string {
 }
 
 func (g *generateCmd) Synopsis() string {
-	return "Generate example config file"
+	return "Generate a config file"
 }
 
 func (g *generateCmd) Usage() string {
-	return `generate [-config <config file>]
+	return `generate [-config <config file>] [-example]
   Generate an example config file.
 `
 }
 
 func (g *generateCmd) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&g.configPath, "config", "", "/path/to/config.yml : path to the configuration file")
+	f.BoolVar(&g.example, "example", false, "generate example configuration file with default values")
 }
 
 func (g *generateCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
@@ -40,7 +41,7 @@ func (g *generateCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface
 		return subcommands.ExitUsageError
 	}
 
-	openConf, err := os.OpenFile(g.configPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0640)
+	openConf, err := os.OpenFile(g.configPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0640)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Error("Missing config file")
@@ -53,7 +54,7 @@ func (g *generateCmd) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface
 		_ = openConf.Close()
 	}()
 
-	conf.Generate(openConf)
+	conf.Generate(openConf, nil, g.example)
 
 	return subcommands.ExitSuccess
 }

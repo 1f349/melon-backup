@@ -39,4 +39,4 @@ deploy: build
 	sudo mkdir -p /etc/melon-backup
 	sudo mkdir -p /usr/local/bin
 	sudo cp "${BIN}" /usr/local/bin
-	sudo "/usr/local/bin/$(NBIN)" generate -config=/etc/melon-backup/example.yml
+	sudo "/usr/local/bin/$(NBIN)" generate -config=/etc/melon-backup/example.yml -example
